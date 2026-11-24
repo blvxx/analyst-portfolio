@@ -363,7 +363,22 @@ def run(project_dir: Path) -> None:
             | ~observations["year"].between(start_year, end_year)
         )
         if invalid.any():
-            raise ValueError(f"World Bank API returned {int(invalid.sum())} out-of-scope observations")
+            details = {
+                "invalid_rows": int(invalid.sum()),
+                "country_codes": sorted(observations["country_code"].dropna().astype(str).unique().tolist()),
+                "indicator_codes": sorted(observations["indicator_code"].dropna().astype(str).unique().tolist()),
+                "year_min": int(observations["year"].min()),
+                "year_max": int(observations["year"].max()),
+                "invalid_country_codes": sorted(
+                    observations.loc[~observations["country_code"].isin(COUNTRIES), "country_code"]
+                    .dropna().astype(str).unique().tolist()
+                ),
+                "invalid_indicator_codes": sorted(
+                    observations.loc[~observations["indicator_code"].isin(INDICATORS), "indicator_code"]
+                    .dropna().astype(str).unique().tolist()
+                ),
+            }
+            raise ValueError(f"World Bank API returned out-of-scope observations: {details}")
         observations["value"] = pd.to_numeric(observations["value"], errors="coerce")
         if observations.duplicated(["country_code", "year", "indicator_code"]).any():
             raise ValueError("World Bank API returned duplicate country-year-indicator keys")
