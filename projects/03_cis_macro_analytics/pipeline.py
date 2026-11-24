@@ -246,8 +246,72 @@ def build_outputs(
         }.items():
             db.register(f"{name}_df", frame)
             db.execute(f"CREATE OR REPLACE TABLE {name} AS SELECT * FROM {name}_df")
+        sql_panel_rows = db.execute("SELECT COUNT(*) FROM macro_panel").fetchone()[0]
+        sql_long_rows = db.execute("SELECT COUNT(*) FROM indicator_long").fetchone()[0]
+        sql_non_null = db.execute(
+            "SELECT COUNT(*) FROM indicator_long WHERE value IS NOT NULL"
+        ).fetchone()[0]
     finally:
         db.close()
+
+    if int(sql_panel_rows) != len(panel) or int(sql_long_rows) != len(observations):
+        raise ValueError("SQL/Python reconciliation failed for macro panel row counts")
+    if panel.duplicated(["country_code", "year"]).any():
+        raise ValueError("Macro country-year panel contains duplicate keys")
+    (output_dir / "sql_reconciliation.json").write_text(
+        json.dumps({
+            "passed": True,
+            "panel_rows": int(sql_panel_rows),
+            "long_observation_rows": int(sql_long_rows),
+            "non_null_values": int(sql_non_null),
+        }, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    findings = [
+        "# CIS macro analytics — generated findings",
+        "",
+        "> Source: World Bank World Development Indicators API v2. Values are country-level aggregates; observation coverage differs by indicator and country.",
+        "",
+        "## Coverage and data quality",
+        "",
+        f"- Countries: {len(COUNTRIES)}.",
+        f"- Full country-year panel: {len(panel):,} rows ({start_year}–{end_year}).",
+        f"- API observations including null values: {len(observations):,}.",
+    ]
+    for column, missing_count in missing_counts.items():
+        total = len(panel)
+        findings.append(
+            f"- {column}: {total - missing_count:,}/{total:,} observed ({(total - missing_count) / total:.1%}); {missing_count:,} gaps."
+        )
+    findings.extend(["", "## First-to-last available changes", ""])
+    if trends.empty:
+        findings.append("- No non-null indicator observations were returned for the requested period.")
+    else:
+        for row in trends.sort_values(["indicator_code", "country_code"]).itertuples(index=False):
+            relative = (
+                f", relative change {row.relative_change_pct:.2f}%"
+                if pd.notna(row.relative_change_pct) else ""
+            )
+            findings.append(
+                f"- {row.country_name}, {row.indicator_code}: {row.first_year} {row.first_value:,.2f} "
+                f"→ {row.last_year} {row.last_value:,.2f} "
+                f"(absolute change {row.absolute_change:,.2f}{relative})."
+            )
+    findings.extend([
+        "",
+        "## Interpretation limits",
+        "",
+        "- GDP per capita is in current US dollars and includes exchange-rate and price effects; it is not real GDP growth.",
+        "- Unemployment is a modeled ILO estimate. Latest available year varies by indicator and country.",
+        "- Pairwise correlations depend on overlapping non-null years; inspect correlation_pair_counts.csv before interpreting a coefficient.",
+        "- Country-level correlation does not establish causality and must not be interpreted as an individual-level relationship.",
+        "- Missing years are not interpolated or filled.",
+        "",
+        "## SQL/Python validation",
+        "",
+        "- DuckDB table row counts reconcile with the source DataFrames; country-year uniqueness is checked.",
+    ])
+    (output_dir / "findings.md").write_text("\n".join(findings) + "\n", encoding="utf-8")
 
     html_parts = [
         "<h1>CIS macro and digital development analytics</h1>",
@@ -292,6 +356,19 @@ def run(project_dir: Path) -> None:
     observations = pd.DataFrame(rows, columns=[
         "country_code", "country_name", "year", "indicator_code", "indicator_name", "value"
     ])
+    if not observations.empty:
+        invalid = (
+            ~observations["country_code"].isin(COUNTRIES)
+            | ~observations["indicator_code"].isin(INDICATORS)
+            | ~observations["year"].between(start_year, end_year)
+        )
+        if invalid.any():
+            raise ValueError(f"World Bank API returned {int(invalid.sum())} out-of-scope observations")
+        observations["value"] = pd.to_numeric(observations["value"], errors="coerce")
+        if observations.duplicated(["country_code", "year", "indicator_code"]).any():
+            raise ValueError("World Bank API returned duplicate country-year-indicator keys")
+    if observations.empty or observations["value"].notna().sum() == 0:
+        raise ValueError("World Bank API returned no usable indicator values for the requested period")
     build_outputs(observations, start_year, end_year, project_dir / "outputs")
     print(f"World Bank analytics complete: {len(observations):,} observations")
     print(f"Dashboard: {project_dir / 'outputs' / 'dashboard.html'}")
