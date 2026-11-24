@@ -59,8 +59,8 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
     if missing_columns:
         raise ValueError(f"Unexpected UCI schema; missing columns: {sorted(missing_columns)}")
 
+    # Identical sessions can be legitimate independent observations; report them but retain them.
     duplicate_rows = int(data.duplicated().sum())
-    data = data.drop_duplicates().copy()
     data["revenue"] = (
         data["revenue"].astype(str).str.strip().str.lower()
         .map({"true": True, "false": False, "1": True, "0": False})
@@ -85,11 +85,17 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
     duration_total = data[duration_columns].sum(axis=1, min_count=1)
     threshold = float(duration_total.quantile(0.99))
     data["duration_upper_1pct_flag"] = duration_total > threshold
+    data["invalid_rate_range_flag"] = (
+        ~data["bounce_rates"].between(0, 1)
+        | ~data["exit_rates"].between(0, 1)
+    )
+    data["negative_duration_flag"] = data[duration_columns].lt(0).any(axis=1)
+    data["negative_page_value_flag"] = data["page_values"].lt(0)
 
     quality = {
         "source": "UCI Online Shoppers Purchasing Intention Dataset (dataset 468)",
         "raw_rows": int(raw_rows),
-        "exact_duplicate_rows_removed": duplicate_rows,
+        "exact_duplicate_rows_flagged_not_removed": duplicate_rows,
         "invalid_revenue_rows_removed": invalid_target_rows,
         "clean_rows": int(len(data)),
         "missing_values_after_cleaning": {
@@ -97,7 +103,13 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
         },
         "duration_upper_1pct_threshold_seconds": threshold,
         "duration_upper_1pct_rows_flagged_not_removed": int(data["duration_upper_1pct_flag"].sum()),
-        "outlier_policy": "Flag only; no automatic deletion or winsorisation.",
+        "invalid_bounce_or_exit_rate_rows_flagged": int(data["invalid_rate_range_flag"].sum()),
+        "negative_duration_rows_flagged": int(data["negative_duration_flag"].sum()),
+        "negative_page_value_rows_flagged": int(data["negative_page_value_flag"].sum()),
+        "outlier_policy": (
+            "Exact duplicates and statistical outliers are reported, not silently removed. "
+            "Negative durations/page values and rates outside [0, 1] are flagged for review."
+        ),
     }
     return data, quality
 
@@ -137,6 +149,8 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         "conversion_rate": float(data["revenue"].mean()) if len(data) else 0.0,
         "dataset_purchase_rate_is_not_campaign_roi": True,
     }
+    if len(data) == 0 or overall["purchases"] > overall["sessions"]:
+        raise ValueError("Marketing KPI reconciliation failed: invalid session or purchase totals")
     visitor = conversion_table(data, "visitor_type")
     traffic = conversion_table(data, "traffic_type")
     month = conversion_table(data, "month")
@@ -153,6 +167,14 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
     visitor.to_csv(output_dir / "conversion_by_visitor.csv", index=False)
     traffic.to_csv(output_dir / "conversion_by_traffic.csv", index=False)
     month.to_csv(output_dir / "conversion_by_month.csv", index=False)
+    segment_summary = (
+        data.groupby("visitor_type", dropna=False)
+        .agg(sessions=("revenue", "size"), purchases=("revenue", "sum"))
+        .reset_index()
+    )
+    segment_summary["conversion_rate"] = segment_summary["purchases"] / segment_summary["sessions"]
+    if int(segment_summary["sessions"].sum()) != len(data):
+        raise ValueError("Visitor segment counts do not reconcile to total sessions")
     data.to_csv(output_dir / "clean_sessions.csv", index=False)
 
     db = duckdb.connect(str(output_dir / "marketing.duckdb"))
