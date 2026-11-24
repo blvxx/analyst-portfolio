@@ -35,7 +35,11 @@ UCI Machine Learning Repository, Online Retail II, dataset 502. 1 067 371 стр
     pip install -r requirements.txt
     python projects/02_ecommerce_analytics/run.py
 
-Для полной обработки Excel на 1M+ строк понадобится достаточный объём оперативной памяти. Pipeline читает оба листа исходной книги.
+Через Docker Compose:
+
+    docker compose run --build --rm ecommerce
+
+Для полной обработки Excel на 1M+ строк понадобится достаточный объём оперативной памяти. Pipeline читает оба листа исходной книги. Исходный workbook и результаты локально сохраняются в .runtime/.
 
 ## Результаты в outputs
 
