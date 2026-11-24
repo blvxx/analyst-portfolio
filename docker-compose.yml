@@ -11,8 +11,8 @@ services:
       dockerfile: Dockerfile
     command: ["python", "projects/01_marketing_analytics/run.py"]
     volumes:
-      - ./.runtime/marketing-data:/app/projects/01_marketing_analytics/data
-      - ./.runtime/marketing-outputs:/app/projects/01_marketing_analytics/outputs
+      - ./projects/01_marketing_analytics/data:/app/projects/01_marketing_analytics/data
+      - ./projects/01_marketing_analytics/outputs:/app/projects/01_marketing_analytics/outputs
 
   ecommerce:
     build:
@@ -20,8 +20,8 @@ services:
       dockerfile: Dockerfile
     command: ["python", "projects/02_ecommerce_analytics/run.py"]
     volumes:
-      - ./.runtime/ecommerce-data:/app/projects/02_ecommerce_analytics/data
-      - ./.runtime/ecommerce-outputs:/app/projects/02_ecommerce_analytics/outputs
+      - ./projects/02_ecommerce_analytics/data:/app/projects/02_ecommerce_analytics/data
+      - ./projects/02_ecommerce_analytics/outputs:/app/projects/02_ecommerce_analytics/outputs
 
   macro:
     build:
@@ -32,5 +32,5 @@ services:
       WB_START_YEAR: "${WB_START_YEAR:-2000}"
       WB_END_YEAR: "${WB_END_YEAR:-2024}"
     volumes:
-      - ./.runtime/macro-data:/app/projects/03_cis_macro_analytics/data
-      - ./.runtime/macro-outputs:/app/projects/03_cis_macro_analytics/outputs
+      - ./projects/03_cis_macro_analytics/data:/app/projects/03_cis_macro_analytics/data
+      - ./projects/03_cis_macro_analytics/outputs:/app/projects/03_cis_macro_analytics/outputs
