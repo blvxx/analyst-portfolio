@@ -67,7 +67,7 @@ def test_trends_use_first_and_last_non_null_observations():
     assert trend["first_year"] == 2018
     assert trend["last_year"] == 2020
     assert trend["absolute_change"] == 4.0
-    assert trend["relative_change_pct"] == 40.0
+    assert abs(trend["relative_change_pct"] - 40.0) < 1e-10
 
 
 def test_panel_preserves_expected_indicators_when_source_has_no_rows():
