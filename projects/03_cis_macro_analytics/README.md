@@ -58,6 +58,8 @@ PowerShell:
 
 - macro_panel.csv — полная панель по странам и годам;
 - indicator_long.csv — исходные непустые наблюдения;
+- findings.md — рассчитанные изменения, полнота данных и аналитические ограничения;
+- sql_reconciliation.json — проверка структуры SQL-таблиц;
 - indicator_trends.csv — первое/последнее доступное значение и изменение;
 - latest_snapshot.csv — последняя доступная точка для каждой страны и серии;
 - indicator_correlations.csv — парные Pearson correlations;
