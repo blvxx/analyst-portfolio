@@ -1,0 +1,1 @@
+.git\n.github\n.venv\nvenv\n__pycache__\n.pytest_cache\ndata\noutputs\nsite\n*.duckdb\n
