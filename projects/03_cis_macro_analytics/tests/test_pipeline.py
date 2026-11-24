@@ -31,6 +31,22 @@ def test_parse_api_payload_preserves_null_observations():
     assert rows[0]["country_code"] == "KAZ"
     assert rows[0]["value"] == 85.9
     assert rows[1]["value"] is None
+    assert rows[1]["country_code"] == "KAZ"
+
+
+def test_iso2_country_codes_are_normalized_when_iso3_is_not_provided():
+    payload = [
+        {"page": 1, "pages": 1, "total": 1},
+        [{
+            "country": {"id": "RU", "value": "Russian Federation"},
+            "countryiso3code": "",
+            "date": "2022",
+            "indicator": {"id": "IT.NET.USER.ZS", "value": "Internet users"},
+            "value": 89.0,
+        }],
+    ]
+    row = macro_pipeline.parse_api_payload(payload, "IT.NET.USER.ZS")[0]
+    assert row["country_code"] == "RUS"
 
 
 def test_panel_builds_full_country_year_grid_without_imputation():
