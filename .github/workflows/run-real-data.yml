@@ -30,10 +30,8 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Download source and run pipeline
-        run: python projects/01_marketing_analytics/run.py
+      - name: Build image and run the full source pipeline in Docker
+        run: docker compose run --build --rm marketing
       - name: Validate source size and KPI reconciliation
         run: |
           python - <<'PY'
@@ -75,10 +73,8 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Download workbook and run pipeline
-        run: python projects/02_ecommerce_analytics/run.py
+      - name: Build image and run the 1M+ row pipeline in Docker
+        run: docker compose run --build --rm ecommerce
       - name: Validate source volume, quality and SQL reconciliation
         run: |
           python - <<'PY'
@@ -121,10 +117,8 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Fetch World Bank API and run pipeline
-        run: python projects/03_cis_macro_analytics/run.py
+      - name: Build image and run the World Bank API pipeline in Docker
+        run: docker compose run --build --rm macro
       - name: Validate country-year coverage and data quality
         run: |
           python - <<'PY'
