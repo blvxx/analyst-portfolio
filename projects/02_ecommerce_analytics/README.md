@@ -39,6 +39,8 @@ UCI Machine Learning Repository, Online Retail II, dataset 502. 1 067 371 стр
 
 ## Результаты в outputs
 
+- summary.json и findings.md — рассчитанные KPI и интерпретация результатов;
+- sql_reconciliation.json — проверка совпадения SQL- и pandas-агрегатов;
 - monthly_sales.csv — выручка, заказы и AOV по месяцам;
 - customer_rfm.csv — recency, frequency, monetary и оценки R/F/M;
 - rfm_segment_summary.csv — агрегированное количество клиентов и средние показатели по именованным сегментам;
