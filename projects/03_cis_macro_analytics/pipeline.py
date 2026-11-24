@@ -22,6 +22,14 @@ COUNTRIES = {
     "ARM": "Armenia",
     "KGZ": "Kyrgyz Republic",
 }
+ISO2_TO_ISO3 = {
+    "RU": "RUS",
+    "KZ": "KAZ",
+    "BY": "BLR",
+    "UZ": "UZB",
+    "AM": "ARM",
+    "KG": "KGZ",
+}
 INDICATORS = {
     "NY.GDP.PCAP.CD": "gdp_per_capita_current_usd",
     "IT.NET.USER.ZS": "internet_users_pct",
@@ -42,8 +50,14 @@ def parse_api_payload(payload: list[Any], indicator_code: str) -> list[dict[str,
     rows = []
     for item in observations:
         country = item.get("country") or {}
+        country_code = (
+            item.get("countryiso3code")
+            or country.get("id")
+            or ""
+        ).upper()
+        country_code = ISO2_TO_ISO3.get(country_code, country_code)
         rows.append({
-            "country_code": (country.get("id") or "").upper(),
+            "country_code": country_code,
             "country_name": country.get("value"),
             "year": int(item["date"]),
             "indicator_code": indicator_code,
