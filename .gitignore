@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# Generated data and outputs
+data/
+outputs/
+*.duckdb
+*.db
+*.xlsx
+*.csv
+*.zip
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
