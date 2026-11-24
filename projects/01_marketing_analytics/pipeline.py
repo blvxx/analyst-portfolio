@@ -293,7 +293,7 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         "",
         "- DuckDB SQL visitor-type aggregates and total session/purchase counts reconcile exactly with pandas.",
     ])
-    (output_dir / "findings.md").write_text("\\n".join(findings) + "\\n", encoding="utf-8")
+    (output_dir / "findings.md").write_text("\n".join(findings) + "\n", encoding="utf-8")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
