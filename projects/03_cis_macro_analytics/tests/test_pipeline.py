@@ -43,6 +43,7 @@ def test_panel_builds_full_country_year_grid_without_imputation():
     ])
     panel = macro_pipeline.build_panel(observations, 2020, 2021)
     assert len(panel) == len(macro_pipeline.COUNTRIES) * 2
+    assert panel["internet_users_pct"].dtype.kind in "fi"
     russia_2020 = panel.loc[
         panel["country_code"].eq("RUS") & panel["year"].eq(2020)
     ].iloc[0]
@@ -66,3 +67,11 @@ def test_trends_use_first_and_last_non_null_observations():
     assert trend["first_year"] == 2018
     assert trend["last_year"] == 2020
     assert trend["absolute_change"] == 4.0
+    assert trend["relative_change_pct"] == 40.0
+
+
+def test_panel_preserves_expected_indicators_when_source_has_no_rows():
+    panel = macro_pipeline.build_panel(pd.DataFrame(), 2021, 2021)
+    for column in macro_pipeline.INDICATORS.values():
+        assert column in panel.columns
+        assert panel[column].isna().all()
