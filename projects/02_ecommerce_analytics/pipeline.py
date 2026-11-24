@@ -257,6 +257,116 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
     finally:
         db.close()
 
+    monthly_check = monthly[["order_month", "revenue_gbp", "orders"]].merge(
+        sql_monthly, on="order_month", suffixes=("_pandas", "_sql")
+    )
+    if (
+        len(monthly_check) != len(monthly)
+        or not np.allclose(monthly_check["revenue_gbp_pandas"], monthly_check["revenue_gbp_sql"])
+        or not monthly_check["orders_pandas"].equals(monthly_check["orders_sql"])
+    ):
+        raise ValueError("SQL/Python reconciliation failed for e-commerce monthly metrics")
+    rfm_check = rfm_segments[["rfm_segment", "customers"]].merge(
+        sql_rfm, on="rfm_segment", suffixes=("_pandas", "_sql")
+    )
+    if (
+        len(rfm_check) != len(rfm_segments)
+        or not rfm_check["customers_pandas"].equals(rfm_check["customers_sql"])
+    ):
+        raise ValueError("SQL/Python reconciliation failed for RFM segment counts")
+    (output_dir / "sql_reconciliation.json").write_text(
+        json.dumps({
+            "passed": True,
+            "monthly_rows": int(len(monthly_check)),
+            "gross_sales_gbp": float(monthly_check["revenue_gbp_sql"].sum()),
+            "orders": int(monthly_check["orders_sql"].sum()),
+            "rfm_segments": int(len(rfm_check)),
+        }, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    gross_sales = float(sales["line_revenue_gbp"].sum())
+    distinct_orders = int(sales["invoice"].nunique())
+    identified_customers = int(sales["customer_id"].nunique())
+    repeated_customers = int((rfm["frequency"] > 1).sum())
+    repeat_rate = repeated_customers / identified_customers if identified_customers else 0.0
+    missing_customer_share = (
+        float(sales["customer_id"].isna().mean()) if len(sales) else 0.0
+    )
+    first_month = monthly.loc[monthly["revenue_gbp"].idxmax()] if not monthly.empty else None
+    leading_country = country.iloc[0] if not country.empty else None
+    month_one = retention.loc[retention["month_index"].eq(1)]
+    weighted_month_one_retention = (
+        float(month_one["active_customers"].sum() / month_one["cohort_size"].sum())
+        if not month_one.empty and month_one["cohort_size"].sum() else None
+    )
+    summary = {
+        "source": "UCI Online Retail II (dataset 502), CC BY 4.0",
+        "raw_rows": int(quality["raw_rows"]),
+        "valid_positive_sales_rows": int(len(sales)),
+        "gross_sales_gbp": gross_sales,
+        "distinct_invoices": distinct_orders,
+        "identified_customers": identified_customers,
+        "repeat_customers": repeated_customers,
+        "repeat_customer_rate": repeat_rate,
+        "missing_customer_id_share_of_sales_rows": missing_customer_share,
+        "highest_sales_month": str(first_month["order_month"]) if first_month is not None else None,
+        "highest_sales_month_revenue_gbp": float(first_month["revenue_gbp"]) if first_month is not None else None,
+        "highest_sales_country": str(leading_country["country"]) if leading_country is not None else None,
+        "highest_sales_country_revenue_gbp": float(leading_country["revenue_gbp"]) if leading_country is not None else None,
+        "weighted_month_1_cohort_retention": weighted_month_one_retention,
+    }
+    (output_dir / "summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    segment_lines = [
+        f"- {row.rfm_segment}: {int(row.customers):,} customers"
+        for row in rfm_segments.itertuples(index=False)
+    ]
+    findings = [
+        "# E-commerce analytics — generated findings",
+        "",
+        "> Source: UCI Online Retail II (2009–2011), CC BY 4.0. These findings describe one historical retailer, not the current e-commerce market.",
+        "",
+        "## Sales and customer base",
+        "",
+        f"- Source rows: {summary['raw_rows']:,}.",
+        f"- Valid positive sale lines: {summary['valid_positive_sales_rows']:,}.",
+        f"- Gross sales (excluding cancellations and negative-quantity rows): £{gross_sales:,.2f}.",
+        f"- Distinct invoices: {distinct_orders:,}.",
+        f"- Identified customers: {identified_customers:,}.",
+        f"- Repeat customers: {repeated_customers:,} ({repeat_rate:.2%} of identified customers).",
+        f"- Sales rows without Customer ID: {missing_customer_share:.2%}.",
+        "",
+        "## Sales concentration and retention",
+        "",
+    ]
+    if first_month is not None:
+        findings.append(
+            f"- Highest-gross-sales month: {first_month['order_month']:%Y-%m} (£{first_month['revenue_gbp']:,.2f})."
+        )
+    if leading_country is not None:
+        findings.append(
+            f"- Highest-gross-sales country: {leading_country['country']} (£{leading_country['revenue_gbp']:,.2f})."
+        )
+    findings.append(
+        f"- Weighted month-1 cohort retention: {weighted_month_one_retention:.2%}."
+        if weighted_month_one_retention is not None
+        else "- Month-1 cohort retention cannot be calculated from available cohorts."
+    )
+    findings.extend(["", "## RFM segments", "", *segment_lines, "", "## Interpretation and limitations", ""])
+    findings.extend([
+        "- RFM scores are relative to this dataset and observation window; they are descriptive labels, not predicted churn probabilities.",
+        "- Gross sales are before refunds; cancellation and negative-quantity lines are excluded rather than matched to each original sale.",
+        "- Missing Customer IDs remain in sales totals but are excluded from customer-level calculations.",
+        "- The dataset is historical (2009–2011), contains many wholesalers and does not contain cost, margin, ad spend or acquisition channel.",
+        "- No claims about modern market performance, profit, CAC or ROAS can be made from these data.",
+        "",
+        "## SQL/Python validation",
+        "",
+        "- Monthly sales, invoice counts and RFM segment counts reconcile between DuckDB SQL and pandas.",
+    ])
+    (output_dir / "findings.md").write_text("\\n".join(findings) + "\\n", encoding="utf-8")
+
     fig_monthly = px.line(
         monthly, x="order_month", y="revenue_gbp",
         title="Monthly gross sales (GBP)", markers=True,
