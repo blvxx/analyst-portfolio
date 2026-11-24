@@ -224,9 +224,20 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
     if reconciliation_ok:
         joined = pandas_visitor.merge(sql_visitor, on="visitor_type", suffixes=("_pandas", "_sql"))
         reconciliation_ok = (
-            joined["sessions_pandas"].equals(joined["sessions_sql"])
-            and joined["purchases_pandas"].equals(joined["purchases_sql"])
-            and np.allclose(joined["conversion_rate_pandas"], joined["conversion_rate_sql"])
+            np.array_equal(
+                joined["sessions_pandas"].to_numpy(dtype="int64"),
+                joined["sessions_sql"].to_numpy(dtype="int64"),
+            )
+            and np.array_equal(
+                joined["purchases_pandas"].to_numpy(dtype="int64"),
+                joined["purchases_sql"].to_numpy(dtype="int64"),
+            )
+            and np.allclose(
+                joined["conversion_rate_pandas"].to_numpy(dtype="float64"),
+                joined["conversion_rate_sql"].to_numpy(dtype="float64"),
+                rtol=1e-12,
+                atol=1e-12,
+            )
         )
     if not reconciliation_ok:
         raise ValueError("SQL/Python reconciliation failed for marketing conversion metrics")
