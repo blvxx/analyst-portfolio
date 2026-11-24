@@ -196,8 +196,104 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         db.execute("CREATE OR REPLACE TABLE sessions AS SELECT * FROM sessions_df")
         db.register("traffic_df", traffic)
         db.execute("CREATE OR REPLACE TABLE conversion_by_traffic AS SELECT * FROM traffic_df")
+        sql_visitor = db.execute("""
+            SELECT
+                visitor_type,
+                COUNT(*) AS sessions,
+                SUM(CAST(revenue AS INTEGER)) AS purchases,
+                AVG(CAST(revenue AS INTEGER)) AS conversion_rate
+            FROM sessions
+            GROUP BY visitor_type
+            ORDER BY sessions DESC
+        """).fetchdf()
+        sql_overall = db.execute("""
+            SELECT COUNT(*) AS sessions,
+                   SUM(CAST(revenue AS INTEGER)) AS purchases
+            FROM sessions
+        """).fetchone()
     finally:
         db.close()
+
+    pandas_visitor = visitor[["visitor_type", "sessions", "purchases", "conversion_rate"]].copy()
+    sql_visitor = sql_visitor[["visitor_type", "sessions", "purchases", "conversion_rate"]].copy()
+    reconciliation_ok = (
+        len(sql_visitor) == len(pandas_visitor)
+        and int(sql_overall[0]) == int(overall["sessions"])
+        and int(sql_overall[1]) == int(overall["purchases"])
+    )
+    if reconciliation_ok:
+        joined = pandas_visitor.merge(sql_visitor, on="visitor_type", suffixes=("_pandas", "_sql"))
+        reconciliation_ok = (
+            joined["sessions_pandas"].equals(joined["sessions_sql"])
+            and joined["purchases_pandas"].equals(joined["purchases_sql"])
+            and np.allclose(joined["conversion_rate_pandas"], joined["conversion_rate_sql"])
+        )
+    if not reconciliation_ok:
+        raise ValueError("SQL/Python reconciliation failed for marketing conversion metrics")
+    (output_dir / "sql_reconciliation.json").write_text(
+        json.dumps({
+            "passed": True,
+            "method": "DuckDB visitor-type and overall aggregates compared with pandas",
+            "sessions": int(sql_overall[0]),
+            "purchases": int(sql_overall[1]),
+        }, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    eligible = visitor.loc[visitor["sessions"].ge(100)].copy()
+    if not eligible.empty:
+        best = eligible.sort_values("conversion_rate", ascending=False).iloc[0]
+        worst = eligible.sort_values("conversion_rate", ascending=True).iloc[0]
+    else:
+        best = worst = None
+    statistics = calculate_statistics(data)
+    findings = [
+        "# Marketing analytics — generated findings",
+        "",
+        "> Source: UCI Online Shoppers Purchasing Intention, 12,330 research sessions. ",
+        "> These are descriptive observations from the dataset, not campaign performance or causal effects.",
+        "",
+        "## Overall conversion",
+        "",
+        f"- Sessions: {overall['sessions']:,}",
+        f"- Sessions ending in purchase: {overall['purchases']:,}",
+        f"- Observed conversion rate: {overall['conversion_rate']:.2%}",
+        "",
+        "## Visitor-type comparison",
+        "",
+    ]
+    for row in visitor.itertuples(index=False):
+        findings.append(
+            f"- {row.visitor_type}: {int(row.purchases):,}/{int(row.sessions):,} purchases "
+            f"({row.conversion_rate:.2%}; Wilson 95% CI {row.conversion_ci_95_lower:.2%}–{row.conversion_ci_95_upper:.2%})."
+        )
+    if best is not None and worst is not None:
+        findings.extend([
+            "",
+            "Among visitor groups with at least 100 sessions:",
+            f"- Highest observed conversion: {best['visitor_type']} ({best['conversion_rate']:.2%}; n={int(best['sessions']):,}).",
+            f"- Lowest observed conversion: {worst['visitor_type']} ({worst['conversion_rate']:.2%}; n={int(worst['sessions']):,}).",
+        ])
+    findings.extend([
+        "",
+        "## Statistical association",
+        "",
+        f"- Chi-square p-value for visitor type × purchase: {statistics['visitor_type_revenue_p_value']:.6g}.",
+        f"- Cramér's V: {statistics['visitor_type_revenue_cramers_v']:.4f}.",
+        f"- Minimum expected cell frequency: {statistics['minimum_expected_cell_frequency']:.2f}.",
+        "- This test evaluates association, not causality. Session data contain no advertising cost, margin or campaign attribution.",
+        "",
+        "## Limitations",
+        "",
+        "- TrafficType is an encoded category; the dataset does not provide named ad platforms.",
+        "- No advertising spend, orders' monetary value, profit or channel attribution is available; CAC, ROAS and ROI cannot be calculated.",
+        "- Conversion differences can reflect user intent and traffic mix; they do not demonstrate the effect of changing a marketing channel.",
+        "- Exact duplicate feature rows are reported but retained because they can represent separate sessions.",
+        "",
+        "## SQL/Python validation",
+        "",
+        "- DuckDB SQL visitor-type aggregates and total session/purchase counts reconcile exactly with pandas.",
+    ])
+    (output_dir / "findings.md").write_text("\\n".join(findings) + "\\n", encoding="utf-8")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
