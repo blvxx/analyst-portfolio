@@ -121,22 +121,39 @@ def conversion_table(data: pd.DataFrame, dimension: str) -> pd.DataFrame:
         .reset_index()
     )
     result["conversion_rate"] = result["purchases"] / result["sessions"]
+    # Wilson 95% interval is more reliable than the normal approximation for small rates.
+    z = 1.96
+    n = result["sessions"].astype(float)
+    p = result["conversion_rate"]
+    denominator = 1 + (z ** 2 / n)
+    center = (p + z ** 2 / (2 * n)) / denominator
+    margin = (
+        z * np.sqrt((p * (1 - p) / n) + (z ** 2 / (4 * n ** 2))) / denominator
+    )
+    result["conversion_ci_95_lower"] = (center - margin).clip(0, 1)
+    result["conversion_ci_95_upper"] = (center + margin).clip(0, 1)
     return result.sort_values("sessions", ascending=False)
 
 
 def calculate_statistics(data: pd.DataFrame) -> dict[str, Any]:
     contingency = pd.crosstab(data["visitor_type"], data["revenue"])
     if contingency.shape[0] >= 2 and contingency.shape[1] >= 2:
-        chi2, p_value, _, _ = chi2_contingency(contingency)
+        chi2, p_value, expected, _ = chi2_contingency(contingency)
+        minimum_expected_frequency = float(expected.min())
         n = int(contingency.to_numpy().sum())
         denominator = min(contingency.shape) - 1
         cramers_v = float(np.sqrt(chi2 / (n * denominator))) if denominator > 0 else 0.0
     else:
         chi2, p_value, cramers_v = float("nan"), float("nan"), float("nan")
+        minimum_expected_frequency = float("nan")
     return {
         "visitor_type_revenue_chi2": float(chi2),
         "visitor_type_revenue_p_value": float(p_value),
         "visitor_type_revenue_cramers_v": cramers_v,
+        "minimum_expected_cell_frequency": minimum_expected_frequency,
+        "chi_square_assumption_warning": bool(
+            np.isfinite(minimum_expected_frequency) and minimum_expected_frequency < 5
+        ),
         "interpretation": "Association test only; it does not establish a causal effect.",
     }
 
@@ -154,6 +171,10 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
     visitor = conversion_table(data, "visitor_type")
     traffic = conversion_table(data, "traffic_type")
     month = conversion_table(data, "month")
+    if int(visitor["sessions"].sum()) != len(data) or int(visitor["purchases"].sum()) != overall["purchases"]:
+        raise ValueError("Visitor-type conversion table does not reconcile to the session-level totals")
+    if int(traffic["sessions"].sum()) != len(data):
+        raise ValueError("Traffic-type session counts do not reconcile to the total")
 
     (output_dir / "overall_metrics.json").write_text(
         json.dumps(overall, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -167,14 +188,6 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
     visitor.to_csv(output_dir / "conversion_by_visitor.csv", index=False)
     traffic.to_csv(output_dir / "conversion_by_traffic.csv", index=False)
     month.to_csv(output_dir / "conversion_by_month.csv", index=False)
-    segment_summary = (
-        data.groupby("visitor_type", dropna=False)
-        .agg(sessions=("revenue", "size"), purchases=("revenue", "sum"))
-        .reset_index()
-    )
-    segment_summary["conversion_rate"] = segment_summary["purchases"] / segment_summary["sessions"]
-    if int(segment_summary["sessions"].sum()) != len(data):
-        raise ValueError("Visitor segment counts do not reconcile to total sessions")
     data.to_csv(output_dir / "clean_sessions.csv", index=False)
 
     db = duckdb.connect(str(output_dir / "marketing.duckdb"))
@@ -193,6 +206,12 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         name="Conversion rate",
         text=(visitor["conversion_rate"] * 100).round(2).astype(str) + "%",
         textposition="outside",
+        error_y=dict(
+            type="data",
+            array=(visitor["conversion_ci_95_upper"] - visitor["conversion_rate"]).clip(lower=0),
+            arrayminus=(visitor["conversion_rate"] - visitor["conversion_ci_95_lower"]).clip(lower=0),
+            visible=True,
+        ),
     ))
     fig.update_layout(
         title="Conversion rate by visitor type",
