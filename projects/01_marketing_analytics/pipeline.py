@@ -15,24 +15,11 @@ from scipy.stats import chi2_contingency
 
 DATASET_URL = "https://archive.ics.uci.edu/static/public/468/online+shoppers+purchasing+intention+dataset.zip"
 REQUIRED_COLUMNS = {
-    "administrative",
-    "administrative_duration",
-    "informational",
-    "informational_duration",
-    "productrelated",
-    "productrelated_duration",
-    "bouncerates",
-    "exitrates",
-    "pagevalues",
-    "specialday",
-    "month",
-    "operatingsystems",
-    "browser",
-    "region",
-    "traffictype",
-    "visitortype",
-    "weekend",
-    "revenue",
+    "administrative", "administrative_duration", "informational",
+    "informational_duration", "product_related", "product_related_duration",
+    "bounce_rates", "exit_rates", "page_values", "special_day", "month",
+    "operating_systems", "browser", "region", "traffic_type",
+    "visitor_type", "weekend", "revenue",
 }
 
 
@@ -51,13 +38,11 @@ def download_source(raw_dir: Path) -> Path:
     response.raise_for_status()
     archive_path = raw_dir / "uci_online_shoppers.zip"
     archive_path.write_bytes(response.content)
-
     with zipfile.ZipFile(archive_path) as archive:
         candidates = [name for name in archive.namelist() if name.lower().endswith(".csv")]
         if not candidates:
             raise ValueError("UCI archive does not contain a CSV file")
-        member = candidates[0]
-        csv_path.write_bytes(archive.read(member))
+        csv_path.write_bytes(archive.read(candidates[0]))
     return csv_path
 
 
@@ -70,14 +55,12 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
         .str.replace(r"([a-z])([A-Z])", r"\1_\2", regex=True)
         .str.lower()
     )
-
     missing_columns = REQUIRED_COLUMNS.difference(data.columns)
     if missing_columns:
         raise ValueError(f"Unexpected UCI schema; missing columns: {sorted(missing_columns)}")
 
     duplicate_rows = int(data.duplicated().sum())
     data = data.drop_duplicates().copy()
-
     data["revenue"] = (
         data["revenue"].astype(str).str.strip().str.lower()
         .map({"true": True, "false": False, "1": True, "0": False})
@@ -88,16 +71,16 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
 
     numeric_columns = [
         "administrative", "administrative_duration", "informational",
-        "informational_duration", "productrelated", "productrelated_duration",
-        "bouncerates", "exitrates", "pagevalues", "specialday",
-        "operatingsystems", "browser", "region", "traffictype",
+        "informational_duration", "product_related", "product_related_duration",
+        "bounce_rates", "exit_rates", "page_values", "special_day",
+        "operating_systems", "browser", "region", "traffic_type",
     ]
     for column in numeric_columns:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
-    # Keep outliers; flag the upper tail instead of silently deleting potentially valid sessions.
+    # Outliers remain in the analytical dataset; the flag makes the tail inspectable.
     duration_columns = [
-        "administrative_duration", "informational_duration", "productrelated_duration"
+        "administrative_duration", "informational_duration", "product_related_duration"
     ]
     duration_total = data[duration_columns].sum(axis=1, min_count=1)
     threshold = float(duration_total.quantile(0.99))
@@ -105,7 +88,7 @@ def load_and_clean(csv_path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
 
     quality = {
         "source": "UCI Online Shoppers Purchasing Intention Dataset (dataset 468)",
-        "raw_rows": raw_rows,
+        "raw_rows": int(raw_rows),
         "exact_duplicate_rows_removed": duplicate_rows,
         "invalid_revenue_rows_removed": invalid_target_rows,
         "clean_rows": int(len(data)),
@@ -142,9 +125,7 @@ def calculate_statistics(data: pd.DataFrame) -> dict[str, Any]:
         "visitor_type_revenue_chi2": float(chi2),
         "visitor_type_revenue_p_value": float(p_value),
         "visitor_type_revenue_cramers_v": cramers_v,
-        "interpretation": (
-            "Association test only; it does not establish a causal effect."
-        ),
+        "interpretation": "Association test only; it does not establish a causal effect.",
     }
 
 
@@ -156,8 +137,8 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         "conversion_rate": float(data["revenue"].mean()) if len(data) else 0.0,
         "dataset_purchase_rate_is_not_campaign_roi": True,
     }
-    visitor = conversion_table(data, "visitortype")
-    traffic = conversion_table(data, "traffictype")
+    visitor = conversion_table(data, "visitor_type")
+    traffic = conversion_table(data, "traffic_type")
     month = conversion_table(data, "month")
 
     (output_dir / "overall_metrics.json").write_text(
@@ -185,7 +166,7 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        x=visitor["visitortype"].astype(str),
+        x=visitor["visitor_type"].astype(str),
         y=visitor["conversion_rate"],
         name="Conversion rate",
         text=(visitor["conversion_rate"] * 100).round(2).astype(str) + "%",
@@ -199,12 +180,12 @@ def build_outputs(data: pd.DataFrame, quality: dict[str, Any], output_dir: Path)
         template="plotly_white",
     )
     fig2 = px.bar(
-        traffic.sort_values("traffictype"),
-        x="traffictype",
+        traffic.sort_values("traffic_type"),
+        x="traffic_type",
         y="conversion_rate",
         hover_data=["sessions", "purchases"],
         title="Conversion rate by TrafficType (encoded category)",
-        labels={"traffictype": "TrafficType code", "conversion_rate": "Conversion rate"},
+        labels={"traffic_type": "TrafficType code", "conversion_rate": "Conversion rate"},
         template="plotly_white",
     )
     html = (
