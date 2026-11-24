@@ -30,10 +30,16 @@ UCI Machine Learning Repository, Online Shoppers Purchasing Intention Dataset, d
     pip install -r requirements.txt
     python projects/01_marketing_analytics/run.py
 
-Выходные файлы создаются в projects/01_marketing_analytics/outputs.
+Через Docker Compose:
+
+    docker compose run --build --rm marketing
+
+Локальные исходники и результаты сохраняются в .runtime/ и не попадают в Git. Выходные файлы создаются в projects/01_marketing_analytics/outputs.
 
 ## Что будет в результате
 
+- findings.md — интерпретация, численные результаты и ограничения;
+- sql_reconciliation.json — сравнение DuckDB SQL и pandas;
 - overall_metrics.json — количество сессий, покупок и общая конверсия;
 - conversion_by_visitor.csv — конверсия новых и вернувшихся посетителей;
 - conversion_by_traffic.csv — конверсия по типам трафика;
