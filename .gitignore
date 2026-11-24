@@ -19,3 +19,4 @@ outputs/
 .vscode/
 .idea/
 .DS_Store
+\n# Generated static dashboard site\nsite/\n
