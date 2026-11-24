@@ -1,14 +1,20 @@
+import importlib.util
+from pathlib import Path
+
 import pandas as pd
 
-from pipeline import calculate_statistics, conversion_table, load_and_clean
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("marketing_pipeline", PROJECT_DIR / "pipeline.py")
+marketing_pipeline = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(marketing_pipeline)
 
 
 def test_conversion_table_uses_sessions_as_denominator():
     frame = pd.DataFrame({
-        "visitortype": ["New", "New", "Returning", "Returning"],
+        "visitor_type": ["New", "New", "Returning", "Returning"],
         "revenue": [False, True, True, True],
     })
-    result = conversion_table(frame, "visitortype").set_index("visitortype")
+    result = marketing_pipeline.conversion_table(frame, "visitor_type").set_index("visitor_type")
     assert result.loc["New", "sessions"] == 2
     assert result.loc["New", "purchases"] == 1
     assert result.loc["New", "conversion_rate"] == 0.5
@@ -20,7 +26,7 @@ def test_statistics_are_defined_for_two_by_two_table():
         "visitor_type": ["New", "New", "Returning", "Returning"],
         "revenue": [False, True, False, True],
     })
-    result = calculate_statistics(frame)
+    result = marketing_pipeline.calculate_statistics(frame)
     assert 0 <= result["visitor_type_revenue_p_value"] <= 1
     assert 0 <= result["visitor_type_revenue_cramers_v"] <= 1
     assert "not establish" in result["interpretation"]
@@ -47,11 +53,10 @@ def test_cleaning_removes_exact_duplicates_and_preserves_outlier_flag(tmp_path):
         "Weekend": [False, True],
         "Revenue": [False, True],
     }
-    pd.DataFrame(raw).to_csv(tmp_path / "sample.csv", index=False)
     pd.concat([pd.DataFrame(raw), pd.DataFrame(raw).iloc[[0]]]).to_csv(
         tmp_path / "with_duplicate.csv", index=False
     )
-    clean, report = load_and_clean(tmp_path / "with_duplicate.csv")
+    clean, report = marketing_pipeline.load_and_clean(tmp_path / "with_duplicate.csv")
     assert len(clean) == 2
     assert report["exact_duplicate_rows_removed"] == 1
     assert "duration_upper_1pct_flag" in clean.columns
