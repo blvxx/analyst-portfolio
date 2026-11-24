@@ -88,9 +88,10 @@ def prepare_sales(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
     cancellation_invoice = data["invoice"].str.upper().str.startswith("C", na=False)
     negative_quantity = data["quantity"].lt(0).fillna(False)
     cancelled_or_returned = cancellation_invoice | negative_quantity
+    # Zero-price lines can represent free samples/promotions; keep them and count zero revenue.
     invalid_quantity_or_price = (
         data["quantity"].isna() | data["unit_price"].isna()
-        | data["quantity"].le(0) | data["unit_price"].le(0)
+        | data["quantity"].le(0) | data["unit_price"].lt(0)
     )
     invalid_date = data["invoice_date"].isna()
 
@@ -110,7 +111,15 @@ def prepare_sales(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
         "nonpositive_or_missing_quantity_price_rows": int(invalid_quantity_or_price.sum()),
         "invalid_invoice_date_rows": int(invalid_date.sum()),
         "missing_customer_id_in_sales_rows": int(sales["customer_id"].isna().sum()),
+        "missing_description_in_sales_rows": int(sales["description"].isna().sum()),
+        "zero_price_sales_rows_retained": int(sales["unit_price"].eq(0).sum()),
         "exact_duplicate_rows_flagged_not_removed": exact_duplicates,
+        "sales_gross_revenue_gbp": float(sales["line_revenue_gbp"].sum()),
+        "sales_row_reconciliation": bool(
+            len(sales) + int(cancelled_or_returned.sum())
+            + int((~cancelled_or_returned & (invalid_quantity_or_price | invalid_date)).sum())
+            == raw_rows
+        ),
         "data_policy": (
             "Returns/cancellations excluded from gross sales; missing customer IDs retained "
             "for order-level sales and excluded only from customer-level analysis."
@@ -163,8 +172,27 @@ def build_customer_outputs(sales: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
         "cohort_month", "active_customers"
     ]].rename(columns={"active_customers": "cohort_size"})
     retention = cohort_counts.merge(cohort_sizes, on="cohort_month", how="left")
-    retention["retention_rate"] = retention["active_customers"] / retention["cohort_size"]
-    retention["cohort_month"] = retention["cohort_month"].astype(str)
+    max_month = customer_sales["order_month"].max()
+    complete_rows = []
+    for cohort_month in retention["cohort_month"].drop_duplicates():
+        cohort_period = pd.Period(cohort_month, freq="M")
+        last_index = (
+            (max_month.year - cohort_period.year) * 12
+            + max_month.month - cohort_period.month
+        )
+        cohort_part = retention.loc[retention["cohort_month"].eq(cohort_month)].set_index("month_index")
+        for month_index in range(last_index + 1):
+            existing = cohort_part.loc[month_index] if month_index in cohort_part.index else None
+            active_customers = int(existing["active_customers"]) if existing is not None else 0
+            cohort_size = int(cohort_part["cohort_size"].iloc[0])
+            complete_rows.append({
+                "cohort_month": str(cohort_month),
+                "month_index": month_index,
+                "active_customers": active_customers,
+                "cohort_size": cohort_size,
+                "retention_rate": active_customers / cohort_size if cohort_size else 0.0,
+            })
+    retention = pd.DataFrame(complete_rows)
     return rfm, retention
 
 
@@ -190,6 +218,20 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
         customers=("customer_id", "nunique"),
     ).reset_index().sort_values("revenue_gbp", ascending=False)
     rfm, retention = build_customer_outputs(sales)
+    rfm_segments = (
+        rfm.groupby("rfm_segment", dropna=False)
+        .agg(customers=("customer_id", "nunique"), average_recency_days=("recency_days", "mean"),
+             average_orders=("frequency", "mean"), average_customer_revenue_gbp=("monetary_gbp", "mean"))
+        .reset_index()
+        .sort_values("customers", ascending=False)
+    )
+
+    if not np.isclose(monthly["revenue_gbp"].sum(), sales["line_revenue_gbp"].sum()):
+        raise ValueError("Monthly sales do not reconcile to gross sales")
+    if int(monthly["orders"].sum()) != int(sales["invoice"].nunique()):
+        raise ValueError("Monthly order count does not reconcile to distinct invoices")
+    if not retention.empty and not retention.loc[retention["month_index"].eq(0), "retention_rate"].eq(1.0).all():
+        raise ValueError("Cohort month-zero retention must equal 100%")
 
     (output_dir / "quality_report.json").write_text(
         json.dumps(quality, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -198,6 +240,7 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
     country.to_csv(output_dir / "country_sales.csv", index=False)
     rfm.to_csv(output_dir / "customer_rfm.csv", index=False)
     retention.to_csv(output_dir / "cohort_retention.csv", index=False)
+    rfm_segments.to_csv(output_dir / "rfm_segment_summary.csv", index=False)
     sales.to_csv(output_dir / "clean_sales.csv", index=False)
 
     db = duckdb.connect(str(output_dir / "ecommerce.duckdb"))
@@ -207,6 +250,7 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
             "monthly_sales": monthly,
             "customer_rfm": rfm,
             "cohort_retention": retention,
+            "rfm_segment_summary": rfm_segments,
         }.items():
             db.register(f"{name}_df", frame)
             db.execute(f"CREATE OR REPLACE TABLE {name} AS SELECT * FROM {name}_df")
@@ -225,12 +269,20 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
         title="Cohort retention (share of cohort with a purchase)",
         labels={"x": "Months since first purchase", "y": "Cohort month", "color": "Retention"},
     )
+    fig_rfm = px.bar(
+        rfm_segments, x="rfm_segment", y="customers",
+        title="Customer segments (RFM)",
+        hover_data=["average_recency_days", "average_orders", "average_customer_revenue_gbp"],
+        labels={"rfm_segment": "RFM segment", "customers": "Customers"},
+        template="plotly_white",
+    )
     dashboard = (
         "<h1>E-commerce analytics — UCI Online Retail II</h1>"
         "<p>Historical single-retailer dataset (2009–2011). Gross sales exclude cancellations "
         "and negative-quantity rows. RFM uses identified customers only.</p>"
         + fig_monthly.to_html(full_html=False, include_plotlyjs="cdn")
         + fig_cohort.to_html(full_html=False, include_plotlyjs=False)
+        + fig_rfm.to_html(full_html=False, include_plotlyjs=False)
     )
     (output_dir / "dashboard.html").write_text(dashboard, encoding="utf-8")
 
