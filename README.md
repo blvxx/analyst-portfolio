@@ -142,6 +142,6 @@ CI проверяет тесты, синтаксис Python и повторно 
 
 В отчёте исходного проекта зафиксированы результаты, рассчитанные из UCI workbook, а не синтетические значения. Датасет также исторический (2010–2011), и все ограничения описаны в самом кейсе.
 
-## Related engineering case: Data Quality & ETL QA
+## Смежный инженерный кейс: Data Quality и ETL QA
 
-For a complementary QA-oriented implementation covering PostgreSQL warehouse layers, Airflow orchestration, source-to-target reconciliation, retries and DQ gates, see the [DWH Data Quality & ETL Testing Platform](https://github.com/blvxx/qa-engineering-portfolio/tree/main/dwh-data-quality-testing). It is a separate synthetic engineering lab, not one of the three open-data analytics projects above.
+Дополняющий проект по тестированию слоёв хранилища PostgreSQL, оркестрации Airflow, сверке source-to-target, повторным запускам и DQ-проверкам: [DWH Data Quality & ETL Testing Platform](https://github.com/blvxx/qa-engineering-portfolio/tree/main/dwh-data-quality-testing). Это отдельная инженерная лаборатория на синтетических данных, а не один из трёх аналитических проектов на открытых данных выше.
