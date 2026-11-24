@@ -86,6 +86,17 @@ def test_trends_use_first_and_last_non_null_observations():
     assert abs(trend["relative_change_pct"] - 40.0) < 1e-10
 
 
+def test_relative_change_is_not_reported_for_negative_baseline():
+    observations = pd.DataFrame([
+        {"country_code": "ARM", "country_name": "Armenia", "year": 2000,
+         "indicator_code": "FP.CPI.TOTL.ZG", "indicator_name": "Inflation", "value": -0.79},
+        {"country_code": "ARM", "country_name": "Armenia", "year": 2024,
+         "indicator_code": "FP.CPI.TOTL.ZG", "indicator_name": "Inflation", "value": 0.27},
+    ])
+    trend = macro_pipeline.calculate_trends(observations).iloc[0]
+    assert pd.isna(trend["relative_change_pct"])
+
+
 def test_panel_preserves_expected_indicators_when_source_has_no_rows():
     panel = macro_pipeline.build_panel(pd.DataFrame(), 2021, 2021)
     for column in macro_pipeline.INDICATORS.values():
