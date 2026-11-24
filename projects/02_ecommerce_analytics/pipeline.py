@@ -133,7 +133,7 @@ def build_customer_outputs(sales: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
     if customer_sales.empty:
         empty_rfm = pd.DataFrame(columns=[
             "customer_id", "recency_days", "frequency", "monetary_gbp",
-            "r_score", "f_score", "m_score", "rfm_segment",
+            "r_score", "f_score", "m_score", "rfm_segment", "rfm_code",
         ])
         empty_cohort = pd.DataFrame(columns=[
             "cohort_month", "month_index", "active_customers",
@@ -148,11 +148,29 @@ def build_customer_outputs(sales: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
         monetary_gbp=("line_revenue_gbp", "sum"),
     ).reset_index()
     rfm["recency_days"] = (snapshot_date - rfm["last_purchase"].dt.normalize()).dt.days
-    rfm["r_score"] = 6 - np.ceil(rfm["recency_days"].rank(method="first", pct=True) * 5).astype(int)
-    rfm["f_score"] = np.ceil(rfm["frequency"].rank(method="first", pct=True) * 5).astype(int)
-    rfm["m_score"] = np.ceil(rfm["monetary_gbp"].rank(method="first", pct=True) * 5).astype(int)
-    rfm[["r_score", "f_score", "m_score"]] = rfm[["r_score", "f_score", "m_score"]].clip(1, 5)
-    rfm["rfm_segment"] = (
+    if len(rfm) == 1:
+        # A single customer cannot be relatively ranked; use neutral scores instead of false extremes.
+        rfm[["r_score", "f_score", "m_score"]] = 3
+    else:
+        # Average ranks keep tied values at the same score instead of splitting ties arbitrarily.
+        rfm["r_score"] = 6 - np.ceil(rfm["recency_days"].rank(method="average", pct=True) * 5).astype(int)
+        rfm["f_score"] = np.ceil(rfm["frequency"].rank(method="average", pct=True) * 5).astype(int)
+        rfm["m_score"] = np.ceil(rfm["monetary_gbp"].rank(method="average", pct=True) * 5).astype(int)
+        rfm[["r_score", "f_score", "m_score"]] = rfm[["r_score", "f_score", "m_score"]].clip(1, 5)
+
+    conditions = [
+        rfm["r_score"].ge(4) & rfm["f_score"].ge(4) & rfm["m_score"].ge(4),
+        rfm["r_score"].ge(3) & rfm["f_score"].ge(4),
+        rfm["r_score"].ge(4) & rfm["f_score"].le(2),
+        rfm["r_score"].ge(4) & rfm["f_score"].ge(3),
+        rfm["r_score"].le(2) & rfm["f_score"].ge(3),
+    ]
+    labels = [
+        "Champions", "Loyal customers", "New customers",
+        "Potential loyalists", "At risk",
+    ]
+    rfm["rfm_segment"] = np.select(conditions, labels, default="Hibernating")
+    rfm["rfm_code"] = (
         rfm["r_score"].astype(str) + rfm["f_score"].astype(str) + rfm["m_score"].astype(str)
     )
     rfm = rfm.drop(columns=["last_purchase"])
