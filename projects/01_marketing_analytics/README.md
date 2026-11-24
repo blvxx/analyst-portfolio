@@ -19,8 +19,8 @@ UCI Machine Learning Repository, Online Shoppers Purchasing Intention Dataset, d
 1. Загрузить исходный ZIP из UCI и сохранить его без модификации в data/raw.
 2. Проверить схему, тип целевой переменной, пропуски и точные дубликаты.
 3. Не удалять длительные сессии как «ошибочные» автоматически. Дубликаты и значения вне допустимых диапазонов только флагируются: полные дубликаты могут быть разными наблюдаемыми сессиями.
-4. Сравнить conversion rate по VisitorType, TrafficType и Month.
-5. Проверить связь VisitorType и Revenue таблицей сопряжённости, χ² и Cramér's V. Статистическая связь не означает причинность.
+4. Сравнить conversion rate по VisitorType, TrafficType и Month; для долей рассчитать Wilson 95% confidence intervals.
+5. Проверить связь VisitorType и Revenue таблицей сопряжённости, χ², минимальной ожидаемой частотой и Cramér's V. Статистическая связь не означает причинность.
 6. Сохранить очищенный CSV, агрегаты, quality report, DuckDB и HTML dashboard.
 
 ## Как запустить
