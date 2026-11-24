@@ -102,6 +102,11 @@ def build_panel(
             values="value",
             aggfunc="first",
         ).reset_index()
+    # Keep the expected schema even if an indicator has no observations in the selected window.
+    for indicator_code in INDICATORS:
+        if indicator_code not in pivot.columns:
+            pivot[indicator_code] = pd.NA
+    pivot = pivot[["country_code", "year", *INDICATORS.keys()]]
     panel = grid.merge(pivot, on=["country_code", "year"], how="left")
     panel = panel.rename(columns=INDICATORS)
     return panel.sort_values(["country_code", "year"]).reset_index(drop=True)
