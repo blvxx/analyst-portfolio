@@ -10,6 +10,8 @@ import duckdb
 import pandas as pd
 import plotly.express as px
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 API_BASE = "https://api.worldbank.org/v2"
 COUNTRIES = {
@@ -59,21 +61,45 @@ def fetch_indicator(
 ) -> tuple[list[dict[str, Any]], list[Any]]:
     country_path = ";".join(COUNTRIES)
     url = f"{API_BASE}/country/{country_path}/indicator/{indicator_code}"
-    response = requests.get(
-        url,
-        params={
-            "format": "json",
-            "date": f"{start_year}:{end_year}",
-            "per_page": 20000,
-            "source": 2,
-        },
-        headers={"User-Agent": "blvxx-analyst-portfolio/1.0 (open-data research)"},
-        timeout=timeout,
+    session = requests.Session()
+    retry = Retry(
+        total=4,
+        connect=4,
+        read=4,
+        status=4,
+        backoff_factor=0.8,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset({"GET"}),
+        respect_retry_after_header=True,
     )
-    response.raise_for_status()
-    payload = response.json()
-    rows = parse_api_payload(payload, indicator_code)
-    return rows, payload
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    params = {
+        "format": "json",
+        "date": f"{start_year}:{end_year}",
+        "per_page": 20000,
+        "source": 2,
+    }
+    headers = {"User-Agent": "blvxx-analyst-portfolio/1.0 (open-data research)"}
+    payloads: list[Any] = []
+    rows: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        response = session.get(
+            url, params={**params, "page": page}, headers=headers, timeout=timeout
+        )
+        response.raise_for_status()
+        payload = response.json()
+        page_rows = parse_api_payload(payload, indicator_code)
+        rows.extend(page_rows)
+        payloads.append(payload)
+        if not payload or not isinstance(payload[0], dict):
+            raise ValueError(f"World Bank API returned invalid pagination metadata for {indicator_code}")
+        page_count = int(payload[0].get("pages") or 1)
+        if page >= page_count:
+            break
+        page += 1
+    session.close()
+    return rows, payloads
 
 
 def build_panel(
@@ -96,16 +122,20 @@ def build_panel(
     else:
         observations = observations.copy()
         observations["value"] = pd.to_numeric(observations["value"], errors="coerce")
+        if observations.duplicated(["country_code", "year", "indicator_code"]).any():
+            raise ValueError("Duplicate country-year-indicator observations returned by World Bank API")
         pivot = observations.pivot_table(
             index=["country_code", "year"],
             columns="indicator_code",
             values="value",
             aggfunc="first",
         ).reset_index()
-    # Keep the expected schema even if an indicator has no observations in the selected window.
+    # Keep the expected numeric schema even if an indicator has no observations in the selected window.
     for indicator_code in INDICATORS:
         if indicator_code not in pivot.columns:
-            pivot[indicator_code] = pd.NA
+            pivot[indicator_code] = pd.Series(index=pivot.index, dtype="float64")
+        else:
+            pivot[indicator_code] = pd.to_numeric(pivot[indicator_code], errors="coerce")
     pivot = pivot[["country_code", "year", *INDICATORS.keys()]]
     panel = grid.merge(pivot, on=["country_code", "year"], how="left")
     panel = panel.rename(columns=INDICATORS)
@@ -119,6 +149,8 @@ def calculate_trends(observations: pd.DataFrame) -> pd.DataFrame:
             "country_code", "country_name", "indicator_code", "indicator_name",
             "first_year", "first_value", "last_year", "last_value", "absolute_change",
         ])
+    observations = observations.copy()
+    observations["value"] = pd.to_numeric(observations["value"], errors="coerce")
     for (country_code, indicator_code), group in observations.groupby(
         ["country_code", "indicator_code"]
     ):
@@ -137,6 +169,10 @@ def calculate_trends(observations: pd.DataFrame) -> pd.DataFrame:
             "last_year": int(last["year"]),
             "last_value": float(last["value"]),
             "absolute_change": float(last["value"] - first["value"]),
+            "relative_change_pct": (
+                float((last["value"] / first["value"] - 1) * 100)
+                if float(first["value"]) != 0 else None
+            ),
         })
     return pd.DataFrame(rows)
 
@@ -165,6 +201,11 @@ def build_outputs(
     correlations = panel[value_columns].corr(method="pearson", min_periods=3)
     correlations.index.name = "indicator"
     correlations.to_csv(output_dir / "indicator_correlations.csv")
+    pair_counts = panel[value_columns].notna().astype(int).T.dot(
+        panel[value_columns].notna().astype(int)
+    )
+    pair_counts.index.name = "indicator"
+    pair_counts.to_csv(output_dir / "correlation_pair_counts.csv")
 
     missing_counts = {
         column: int(panel[column].isna().sum()) for column in value_columns
@@ -177,8 +218,15 @@ def build_outputs(
         "start_year": start_year,
         "end_year": end_year,
         "long_observation_rows": int(len(observations)),
+        "duplicate_country_year_indicator_rows": int(
+            observations.duplicated(["country_code", "year", "indicator_code"]).sum()
+        ),
         "panel_rows": int(len(panel)),
         "missing_values_by_indicator_in_country_year_grid": missing_counts,
+        "non_null_observations_by_indicator": {
+            code: int(observations.loc[observations["indicator_code"].eq(code), "value"].notna().sum())
+            for code in INDICATORS
+        },
         "missing_policy": "No interpolation or imputation; gaps remain null.",
     }
     (output_dir / "quality_report.json").write_text(
@@ -234,11 +282,11 @@ def run(project_dir: Path) -> None:
     raw_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
     for indicator_code in INDICATORS:
-        indicator_rows, payload = fetch_indicator(indicator_code, start_year, end_year)
+        indicator_rows, payloads = fetch_indicator(indicator_code, start_year, end_year)
         rows.extend(indicator_rows)
         safe_name = indicator_code.replace(".", "_")
         (raw_dir / f"{safe_name}.json").write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(payloads, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
     observations = pd.DataFrame(rows, columns=[
