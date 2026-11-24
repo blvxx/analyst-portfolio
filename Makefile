@@ -1,6 +1,7 @@
 PYTHON ?= python
+DOCKER_COMPOSE ?= docker compose
 
-.PHONY: install test marketing ecommerce macro all
+.PHONY: install test marketing ecommerce macro all docker-test docker-marketing docker-ecommerce docker-macro
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -18,3 +19,15 @@ macro:
 	$(PYTHON) projects/03_cis_macro_analytics/run.py
 
 all: marketing ecommerce macro
+
+docker-test:
+	$(DOCKER_COMPOSE) run --build --rm tests
+
+docker-marketing:
+	$(DOCKER_COMPOSE) run --build --rm marketing
+
+docker-ecommerce:
+	$(DOCKER_COMPOSE) run --build --rm ecommerce
+
+docker-macro:
+	$(DOCKER_COMPOSE) run --build --rm macro
