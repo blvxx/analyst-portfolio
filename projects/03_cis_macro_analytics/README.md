@@ -43,6 +43,10 @@ World Bank Indicators API v2, World Development Indicators (source ID 2). API п
     pip install -r requirements.txt
     python projects/03_cis_macro_analytics/run.py
 
+Через Docker Compose:
+
+    docker compose run --build --rm macro
+
 Настройка периода:
 
     # Linux/macOS
@@ -53,6 +57,12 @@ PowerShell:
     $env:WB_START_YEAR="2000"
     $env:WB_END_YEAR="2024"
     python projects/03_cis_macro_analytics/run.py
+
+Docker Compose:
+
+    $env:WB_START_YEAR="2000"
+    $env:WB_END_YEAR="2024"
+    docker compose run --build --rm macro
 
 ## Результаты
 
