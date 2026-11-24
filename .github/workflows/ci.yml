@@ -21,3 +21,5 @@ jobs:
         run: python -m pytest -q
       - name: Compile project code
         run: python -m compileall -q projects scripts
+      - name: Run test suite inside Docker Compose
+        run: docker compose run --build --rm tests
