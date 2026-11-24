@@ -1,0 +1,202 @@
+name: Real Data Pipelines and Dashboards
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/**"
+      - "requirements.txt"
+      - "scripts/**"
+      - ".github/workflows/run-real-data.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: analyst-real-data-\${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  marketing:
+    name: Marketing Analytics — UCI real data
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download source and run pipeline
+        run: python projects/01_marketing_analytics/run.py
+      - name: Validate source size and KPI reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out = Path("projects/01_marketing_analytics/outputs")
+          quality = json.loads((out / "quality_report.json").read_text())
+          overall = json.loads((out / "overall_metrics.json").read_text())
+          sql = json.loads((out / "sql_reconciliation.json").read_text())
+          assert quality["raw_rows"] == 12330, quality
+          assert overall["sessions"] == 12330, overall
+          assert overall["purchases"] == 1908, overall
+          assert sql["passed"] is True, sql
+          assert (out / "findings.md").stat().st_size > 100
+          print({"raw_rows": quality["raw_rows"], "sessions": overall["sessions"], "purchases": overall["purchases"], "sql_reconciliation": sql})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketing-results
+          if-no-files-found: error
+          path: |
+            projects/01_marketing_analytics/outputs/dashboard.html
+            projects/01_marketing_analytics/outputs/findings.md
+            projects/01_marketing_analytics/outputs/overall_metrics.json
+            projects/01_marketing_analytics/outputs/quality_report.json
+            projects/01_marketing_analytics/outputs/statistical_tests.json
+            projects/01_marketing_analytics/outputs/sql_reconciliation.json
+            projects/01_marketing_analytics/outputs/conversion_by_visitor.csv
+            projects/01_marketing_analytics/outputs/conversion_by_traffic.csv
+            projects/01_marketing_analytics/outputs/conversion_by_month.csv
+
+  ecommerce:
+    name: E-commerce Analytics — UCI 1M+ rows
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download workbook and run pipeline
+        run: python projects/02_ecommerce_analytics/run.py
+      - name: Validate source volume, quality and SQL reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out = Path("projects/02_ecommerce_analytics/outputs")
+          quality = json.loads((out / "quality_report.json").read_text())
+          summary = json.loads((out / "summary.json").read_text())
+          sql = json.loads((out / "sql_reconciliation.json").read_text())
+          assert quality["raw_rows"] == 1067371, quality
+          assert quality["sales_row_reconciliation"] is True, quality
+          assert summary["distinct_invoices"] > 10000, summary
+          assert summary["identified_customers"] > 1000, summary
+          assert sql["passed"] is True, sql
+          assert (out / "findings.md").stat().st_size > 100
+          print({"raw_rows": quality["raw_rows"], "sale_rows": quality["sale_rows"], "gross_sales_gbp": summary["gross_sales_gbp"], "repeat_rate": summary["repeat_customer_rate"], "sql_reconciliation": sql})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ecommerce-results
+          if-no-files-found: error
+          path: |
+            projects/02_ecommerce_analytics/outputs/dashboard.html
+            projects/02_ecommerce_analytics/outputs/findings.md
+            projects/02_ecommerce_analytics/outputs/summary.json
+            projects/02_ecommerce_analytics/outputs/quality_report.json
+            projects/02_ecommerce_analytics/outputs/sql_reconciliation.json
+            projects/02_ecommerce_analytics/outputs/monthly_sales.csv
+            projects/02_ecommerce_analytics/outputs/country_sales.csv
+            projects/02_ecommerce_analytics/outputs/cohort_retention.csv
+            projects/02_ecommerce_analytics/outputs/rfm_segment_summary.csv
+
+  macro:
+    name: CIS Macro Analytics — World Bank API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Fetch World Bank API and run pipeline
+        run: python projects/03_cis_macro_analytics/run.py
+      - name: Validate country-year coverage and data quality
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out = Path("projects/03_cis_macro_analytics/outputs")
+          quality = json.loads((out / "quality_report.json").read_text())
+          sql = json.loads((out / "sql_reconciliation.json").read_text())
+          assert quality["panel_rows"] == 150, quality
+          assert quality["duplicate_country_year_indicator_rows"] == 0, quality
+          assert all(v > 0 for v in quality["non_null_observations_by_indicator"].values()), quality
+          assert sql["passed"] is True, sql
+          assert (out / "findings.md").stat().st_size > 100
+          print({"panel_rows": quality["panel_rows"], "observations": quality["long_observation_rows"], "missing": quality["missing_values_by_indicator_in_country_year_grid"], "sql_reconciliation": sql})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macro-results
+          if-no-files-found: error
+          path: |
+            projects/03_cis_macro_analytics/outputs/dashboard.html
+            projects/03_cis_macro_analytics/outputs/findings.md
+            projects/03_cis_macro_analytics/outputs/quality_report.json
+            projects/03_cis_macro_analytics/outputs/sql_reconciliation.json
+            projects/03_cis_macro_analytics/outputs/macro_panel.csv
+            projects/03_cis_macro_analytics/outputs/indicator_trends.csv
+            projects/03_cis_macro_analytics/outputs/latest_snapshot.csv
+            projects/03_cis_macro_analytics/outputs/indicator_correlations.csv
+            projects/03_cis_macro_analytics/outputs/correlation_pair_counts.csv
+
+  build-site:
+    name: Assemble dashboards and safe aggregate reports
+    runs-on: ubuntu-latest
+    needs: [marketing, ecommerce, macro]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: marketing-results
+          path: projects/01_marketing_analytics/outputs
+      - uses: actions/download-artifact@v4
+        with:
+          name: ecommerce-results
+          path: projects/02_ecommerce_analytics/outputs
+      - uses: actions/download-artifact@v4
+        with:
+          name: macro-results
+          path: projects/03_cis_macro_analytics/outputs
+      - name: Assemble static dashboards
+        run: python scripts/build_site.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: analyst-dashboards-site
+          path: site/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy-pages:
+    name: Deploy GitHub Pages (manual runs only)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs: build-site
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
