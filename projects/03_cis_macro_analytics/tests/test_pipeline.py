@@ -75,3 +75,18 @@ def test_panel_preserves_expected_indicators_when_source_has_no_rows():
     for column in macro_pipeline.INDICATORS.values():
         assert column in panel.columns
         assert panel[column].isna().all()
+
+
+def test_duplicate_country_year_indicator_key_is_rejected():
+    observations = pd.DataFrame([
+        {"country_code": "RUS", "country_name": "Russian Federation", "year": 2020,
+         "indicator_code": "IT.NET.USER.ZS", "indicator_name": "Internet users", "value": 85.0},
+        {"country_code": "RUS", "country_name": "Russian Federation", "year": 2020,
+         "indicator_code": "IT.NET.USER.ZS", "indicator_name": "Internet users", "value": 85.0},
+    ])
+    try:
+        macro_pipeline.build_panel(observations, 2020, 2020)
+    except ValueError as exc:
+        assert "Duplicate" in str(exc)
+    else:
+        raise AssertionError("Duplicate keys should be rejected")
