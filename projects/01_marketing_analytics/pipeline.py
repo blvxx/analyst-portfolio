@@ -138,7 +138,7 @@ def conversion_table(data: pd.DataFrame, dimension: str) -> pd.DataFrame:
 def calculate_statistics(data: pd.DataFrame) -> dict[str, Any]:
     contingency = pd.crosstab(data["visitor_type"], data["revenue"])
     if contingency.shape[0] >= 2 and contingency.shape[1] >= 2:
-        chi2, p_value, expected, _ = chi2_contingency(contingency)
+        chi2, p_value, _, expected = chi2_contingency(contingency)
         minimum_expected_frequency = float(expected.min())
         n = int(contingency.to_numpy().sum())
         denominator = min(contingency.shape) - 1
