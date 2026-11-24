@@ -1,28 +1,24 @@
--- Run from this project's directory with DuckDB CLI.
--- The Python pipeline creates outputs/marketing.duckdb and outputs/sessions.
+-- Run against outputs/marketing.duckdb.
 
--- Overall conversion rate
 SELECT
     COUNT(*) AS sessions,
     COUNT(*) FILTER (WHERE revenue) AS purchases,
     AVG(CAST(revenue AS INTEGER)) AS conversion_rate
 FROM sessions;
 
--- Conversion by visitor type
 SELECT
-    visitortype,
+    visitor_type,
     COUNT(*) AS sessions,
     SUM(CAST(revenue AS INTEGER)) AS purchases,
     AVG(CAST(revenue AS INTEGER)) AS conversion_rate
 FROM sessions
-GROUP BY visitortype
+GROUP BY visitor_type
 ORDER BY sessions DESC;
 
--- Traffic type coverage and conversion
 SELECT
-    traffictype,
+    traffic_type,
     COUNT(*) AS sessions,
     AVG(CAST(revenue AS INTEGER)) AS conversion_rate
 FROM sessions
-GROUP BY traffictype
+GROUP BY traffic_type
 ORDER BY sessions DESC;
