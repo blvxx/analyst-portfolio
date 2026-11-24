@@ -254,6 +254,20 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
         }.items():
             db.register(f"{name}_df", frame)
             db.execute(f"CREATE OR REPLACE TABLE {name} AS SELECT * FROM {name}_df")
+        sql_monthly = db.execute("""
+            SELECT
+                DATE_TRUNC('month', invoice_date) AS order_month,
+                SUM(line_revenue_gbp) AS revenue_gbp,
+                COUNT(DISTINCT invoice) AS orders
+            FROM clean_sales
+            GROUP BY 1
+            ORDER BY 1
+        """).fetchdf()
+        sql_rfm = db.execute("""
+            SELECT rfm_segment, COUNT(DISTINCT customer_id) AS customers
+            FROM customer_rfm
+            GROUP BY rfm_segment
+        """).fetchdf()
     finally:
         db.close()
 
