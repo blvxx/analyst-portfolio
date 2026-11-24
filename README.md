@@ -141,3 +141,7 @@ CI проверяет тесты, синтаксис Python и повторно 
 - [README и методология исходного проекта](https://github.com/blvxx/portfolio/tree/main/customer-retention-analytics)
 
 В отчёте исходного проекта зафиксированы результаты, рассчитанные из UCI workbook, а не синтетические значения. Датасет также исторический (2010–2011), и все ограничения описаны в самом кейсе.
+
+## Related engineering case: Data Quality & ETL QA
+
+For a complementary QA-oriented implementation covering PostgreSQL warehouse layers, Airflow orchestration, source-to-target reconciliation, retries and DQ gates, see the [DWH Data Quality & ETL Testing Platform](https://github.com/blvxx/qa-engineering-portfolio/tree/main/dwh-data-quality-testing). It is a separate synthetic engineering lab, not one of the three open-data analytics projects above.
