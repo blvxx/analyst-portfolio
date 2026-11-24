@@ -10,9 +10,9 @@
 
 | Проект | Бизнес-вопрос | Данные | Основные методы |
 |---|---|---|---|
-| 01. Marketing Analytics | Какие характеристики сессии связаны с покупкой и где отличаются конверсии? | UCI Online Shoppers Purchasing Intention, 12 330 реальных сессий | очистка, conversion rate, сегментация, χ², Cramér's V, SQL |
-| 02. E-commerce Analytics | Как меняются продажи, клиентская база, повторные покупки и когорты? | UCI Online Retail II, 1 067 371 строк транзакций | ETL, data quality, RFM, когортный анализ, SQL/DuckDB |
-| 03. CIS Macro Analytics | Как менялись цифровое развитие и экономические показатели стран СНГ? | World Bank Indicators API, временные ряды по странам и годам | API ingestion, обработка пропусков, сравнение трендов, корреляции |
+| [01. Marketing Analytics](./projects/01_marketing_analytics/) | Какие характеристики сессии связаны с покупкой и где отличаются конверсии? | UCI Online Shoppers Purchasing Intention, 12 330 реальных сессий | очистка, conversion rate, сегментация, χ², Cramér's V, SQL |
+| [02. E-commerce Analytics](./projects/02_ecommerce_analytics/) | Как меняются продажи, клиентская база, повторные покупки и когорты? | UCI Online Retail II, 1 067 371 строк транзакций | ETL, data quality, RFM, когортный анализ, SQL/DuckDB |
+| [03. CIS Macro Analytics](./projects/03_cis_macro_analytics/) | Как менялись цифровое развитие и экономические показатели стран СНГ? | World Bank Indicators API, временные ряды по странам и годам | API ingestion, обработка пропусков, сравнение трендов, корреляции |
 
 ## Быстрый старт
 
@@ -110,7 +110,7 @@
 - [Полный запуск всех трёх проектов и сборка дашбордов](https://github.com/blvxx/analyst-portfolio/actions/runs/45391368691)
 - [CI: unit-тесты и компиляция](https://github.com/blvxx/analyst-portfolio/actions/runs/45391368236)
 
-CI проверяет тесты и синтаксис Python; отдельный workflow загружает полные исходники, выполняет ETL, проверяет ожидаемый объём и SQL/Python reconciliation, собирает интерактивные HTML-дашборды. В публичный артефакт входят только агрегированные результаты и визуализации, не построчные сессии и не клиентские ID.
+CI проверяет тесты, синтаксис Python и повторно выполняет 14 unit-тестов внутри Docker Compose; отдельный workflow запускает все три ETL внутри Docker, загружает полные исходники, проверяет ожидаемый объём и SQL/Python reconciliation, собирает интерактивные HTML-дашборды. В публичный артефакт входят только агрегированные результаты и визуализации, не построчные сессии и не клиентские ID.
 
 ## Лицензия
 
