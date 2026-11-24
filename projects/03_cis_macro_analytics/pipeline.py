@@ -183,9 +183,10 @@ def calculate_trends(observations: pd.DataFrame) -> pd.DataFrame:
             "last_year": int(last["year"]),
             "last_value": float(last["value"]),
             "absolute_change": float(last["value"] - first["value"]),
+            # Percentage change is undefined/unhelpful when the baseline is zero or negative.
             "relative_change_pct": (
                 float((last["value"] / first["value"] - 1) * 100)
-                if float(first["value"]) != 0 else None
+                if float(first["value"]) > 0 else None
             ),
         })
     return pd.DataFrame(rows)
