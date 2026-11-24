@@ -379,7 +379,7 @@ def build_outputs(sales: pd.DataFrame, quality: dict[str, Any], output_dir: Path
         "",
         "- Monthly sales, invoice counts and RFM segment counts reconcile between DuckDB SQL and pandas.",
     ])
-    (output_dir / "findings.md").write_text("\\n".join(findings) + "\\n", encoding="utf-8")
+    (output_dir / "findings.md").write_text("\n".join(findings) + "\n", encoding="utf-8")
 
     fig_monthly = px.line(
         monthly, x="order_month", y="revenue_gbp",
