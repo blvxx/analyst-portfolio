@@ -19,6 +19,8 @@ def test_conversion_table_uses_sessions_as_denominator():
     assert result.loc["New", "purchases"] == 1
     assert result.loc["New", "conversion_rate"] == 0.5
     assert result.loc["Returning", "conversion_rate"] == 1.0
+    assert 0 <= result.loc["New", "conversion_ci_95_lower"] <= 0.5
+    assert 0.5 <= result.loc["New", "conversion_ci_95_upper"] <= 1
 
 
 def test_statistics_are_defined_for_two_by_two_table():
