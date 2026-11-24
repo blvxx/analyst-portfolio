@@ -20,3 +20,5 @@ outputs/
 .idea/
 .DS_Store
 \n# Generated static dashboard site\nsite/\n
+# Local Docker pipeline data and outputs
+.runtime/
