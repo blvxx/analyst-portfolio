@@ -5,46 +5,100 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
+
 PROJECTS = [
-    ("01_marketing_analytics", "Marketing Analytics", "Конверсия сессий и поведение онлайн-покупателей"),
-    ("02_ecommerce_analytics", "E-commerce Analytics", "Продажи, RFM и когортное удержание"),
-    ("03_cis_macro_analytics", "CIS Macro Analytics", "Показатели цифрового развития и макроэкономики"),
+    {
+        "slug": "01_marketing_analytics",
+        "title": "Marketing Analytics",
+        "description": "Конверсия, типы посетителей, трафик и статистическая неопределённость",
+        "safe_outputs": [
+            "findings.md", "overall_metrics.json", "quality_report.json",
+            "statistical_tests.json", "sql_reconciliation.json",
+            "conversion_by_visitor.csv", "conversion_by_traffic.csv",
+            "conversion_by_month.csv",
+        ],
+    },
+    {
+        "slug": "02_ecommerce_analytics",
+        "title": "E-commerce Analytics",
+        "description": "Исторические продажи, возвраты, RFM и когортное удержание",
+        "safe_outputs": [
+            "findings.md", "summary.json", "quality_report.json", "sql_reconciliation.json",
+            "monthly_sales.csv", "country_sales.csv", "cohort_retention.csv",
+            "rfm_segment_summary.csv",
+        ],
+    },
+    {
+        "slug": "03_cis_macro_analytics",
+        "title": "CIS Macro Analytics",
+        "description": "Макроэкономические индикаторы и цифровое развитие стран СНГ",
+        "safe_outputs": [
+            "findings.md", "quality_report.json", "sql_reconciliation.json",
+            "macro_panel.csv", "indicator_trends.csv", "latest_snapshot.csv",
+            "indicator_correlations.csv", "correlation_pair_counts.csv",
+        ],
+    },
 ]
+
+
+def copy_required(source_dir: Path, destination_dir: Path, filenames: list[str]) -> None:
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    for filename in filenames:
+        source = source_dir / filename
+        if not source.exists():
+            raise FileNotFoundError(f"Expected generated output is missing: {source}")
+        shutil.copy2(source, destination_dir / filename)
+
+
+def render_project_card(project: dict[str, object]) -> str:
+    slug = str(project["slug"])
+    title = str(project["title"])
+    description = str(project["description"])
+    return (
+        "<article><h2>" + title + "</h2><p>" + description + "</p>"
+        '<p><a href="' + slug + '/dashboard.html">Открыть интерактивный дашборд</a> '
+        '| <a href="https://github.com/blvxx/analyst-portfolio/tree/main/projects/'
+        + slug + '">Исходный код и методология</a> '
+        '| <a href="' + slug + '/data/findings.md">Аналитические выводы</a></p>'
+        "</article>"
+    )
 
 
 def main() -> None:
     SITE.mkdir(parents=True, exist_ok=True)
-    links = []
-    for slug, title, description in PROJECTS:
-        source = ROOT / "projects" / slug / "outputs" / "dashboard.html"
-        if not source.exists():
-            raise FileNotFoundError(
-                f"Dashboard is missing: {source}. Run the corresponding project pipeline first."
-            )
+    cards: list[str] = []
+    for project in PROJECTS:
+        slug = str(project["slug"])
+        source_dir = ROOT / "projects" / slug / "outputs"
         destination_dir = SITE / slug
+        dashboard = source_dir / "dashboard.html"
+        if not dashboard.exists():
+            raise FileNotFoundError(
+                f"Dashboard is missing: {dashboard}. Run the corresponding pipeline first."
+            )
         destination_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, destination_dir / "dashboard.html")
-        links.append(
-            "<li><a href='" + slug + "/dashboard.html'>" + title + "</a>"
-            "<p>" + description + "</p></li>"
-        )
+        shutil.copy2(dashboard, destination_dir / "dashboard.html")
+        copy_required(source_dir, destination_dir / "data", list(project["safe_outputs"]))
+        cards.append(render_project_card(project))
 
     page = "\n".join([
         "<!doctype html>",
         '<html lang="ru"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        "<title>Analyst Portfolio — Dashboards</title>",
+        "<title>Analyst Portfolio — Data Analytics</title>",
         "<style>",
-        "body{font:16px/1.6 system-ui,sans-serif;max-width:900px;margin:48px auto;padding:0 20px;color:#172033;background:#f7f8fb}",
-        "h1{font-size:2rem}li{margin:22px 0;padding:20px;background:white;border:1px solid #e4e8ef;border-radius:14px}",
-        "a{color:#2457c5;font-weight:700}p{margin:6px 0;color:#5c6678}",
+        "body{font:16px/1.65 system-ui,sans-serif;max-width:1040px;margin:48px auto;padding:0 22px;color:#182235;background:#f5f7fb}",
+        "header{margin-bottom:34px}h1{font-size:2.2rem;line-height:1.2}header p{color:#5b6678}",
+        "article{margin:18px 0;padding:24px;background:#fff;border:1px solid #e3e8f1;border-radius:16px;box-shadow:0 8px 26px rgba(25,40,70,.04)}",
+        "a{color:#2359c4;font-weight:650;text-decoration:none}a:hover{text-decoration:underline}",
+        "footer{margin-top:38px;color:#667085;font-size:.92rem}",
         "</style></head><body>",
-        "<h1>Analyst Portfolio — интерактивные дашборды</h1>",
-        "<p>Три аналитических кейса на открытых реальных данных. Источники, методология и ограничения описаны в GitHub-репозитории.</p>",
-        "<ul>",
-        *links,
-        "</ul>",
-        '<p><a href="https://github.com/blvxx/analyst-portfolio">Исходный код и инструкции на GitHub</a></p>',
+        "<header><h1>Data Analyst Portfolio</h1>",
+        "<p>Три аналитических проекта на открытых реальных данных. В каждом кейсе доступны интерактивный дашборд, выводы, источник данных, методология и ограничения.</p>",
+        "<p>Проекты — независимые аналитические работы на публичных данных, не коммерческие клиентские кейсы.</p></header>",
+        *cards,
+        '<footer><a href="https://github.com/blvxx/analyst-portfolio">Исходный код на GitHub</a> · '
+        '<a href="https://github.com/blvxx">Профиль GitHub</a></footer>',
         "</body></html>",
     ])
     (SITE / "index.html").write_text(page, encoding="utf-8")
