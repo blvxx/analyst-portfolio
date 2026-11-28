@@ -41,6 +41,22 @@ PROJECTS = [
 ]
 
 
+STATIC_CASES = [
+    {
+        "slug": "customer-retention-analytics",
+        "title": "Customer Retention & Sales Analytics",
+        "description": "UCI Online Retail: очистка транзакций, возвраты, RFM, повторные покупки и когортное удержание",
+        "copy_generated": True,
+    },
+    {
+        "slug": "subscription-revenue-analytics",
+        "title": "Subscription Revenue & Retention Analytics",
+        "description": "PostgreSQL BI: MRR / ARR, revenue bridge, churn, expansion, cohorts и quality checks на синтетической модели подписок",
+        "copy_generated": False,
+    },
+]
+
+
 def copy_required(source_dir: Path, destination_dir: Path, filenames: list[str]) -> None:
     destination_dir.mkdir(parents=True, exist_ok=True)
     for filename in filenames:
@@ -81,11 +97,32 @@ def main() -> None:
         copy_required(source_dir, destination_dir / "data", list(project["safe_outputs"]))
         cards.append(render_project_card(project))
 
+    for case in STATIC_CASES:
+        slug = str(case["slug"])
+        source_dir = ROOT / "projects" / slug
+        destination_dir = SITE / slug
+        source_page = source_dir / "index.html"
+        if not source_page.exists():
+            raise FileNotFoundError(f"Static case page is missing: {source_page}")
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_page, destination_dir / "index.html")
+        if bool(case["copy_generated"]):
+            generated = source_dir / "docs" / "generated"
+            if not generated.exists():
+                raise FileNotFoundError(f"Generated public report is missing: {generated}")
+            shutil.copytree(generated, destination_dir / "docs" / "generated", dirs_exist_ok=True)
+        cards.append(
+            "<article><h2>" + str(case["title"]) + "</h2><p>" + str(case["description"]) + "</p>"
+            '<p><a href="' + slug + '/">Открыть кейс</a> '
+            '| <a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/projects/'
+            + slug + '">Исходный код и методология</a></p></article>'
+        )
+
     page = "\n".join([
         "<!doctype html>",
         '<html lang="ru"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        "<title>Analyst Portfolio — Data Analytics</title>",
+        "<title>Data Analytics — Projects & Dashboards</title>",
         "<style>",
         "body{font:16px/1.65 system-ui,sans-serif;max-width:1040px;margin:48px auto;padding:0 22px;color:#182235;background:#f5f7fb}",
         "header{margin-bottom:34px}h1{font-size:2.2rem;line-height:1.2}header p{color:#5b6678}",
@@ -93,8 +130,8 @@ def main() -> None:
         "a{color:#2359c4;font-weight:650;text-decoration:none}a:hover{text-decoration:underline}",
         "footer{margin-top:38px;color:#667085;font-size:.92rem}",
         "</style></head><body>",
-        "<header><h1>Data Analyst Portfolio</h1>",
-        "<p>Три аналитических проекта на открытых реальных данных. В каждом кейсе доступны интерактивный дашборд, выводы, источник данных, методология и ограничения.</p>",
+        "<header><h1>Data Analytics Projects & Dashboards</h1>",
+        "<p>Пять аналитических кейсов: три воспроизводимых pipeline на открытых данных и два отдельных направления Customer Retention и Subscription Revenue. Для каждого доступны методология, ограничения и исходные материалы.</p>",
         "<p>Проекты — независимые аналитические работы на публичных данных, не коммерческие клиентские кейсы.</p></header>",
         *cards,
         '<footer><a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards">Исходный код на GitHub</a> · '
