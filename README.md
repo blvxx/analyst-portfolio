@@ -1,4 +1,4 @@
-# Data Analytics — Project Evidence
+# Data Analytics Projects & Dashboards
 
 > **Portfolio navigation:** the employer-facing overview is the [single career portfolio](https://blvxx.github.io/portfolio/). This repository contains reproducible analytics projects, data pipelines, SQL/Python analysis and dashboard evidence.
 
@@ -8,13 +8,15 @@
 
 [Открыть опубликованные интерактивные дашборды](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/) · [Посмотреть исходный код и ETL](https://github.com/blvxx/Data-Analytics-Projects-Dashboards)
 
-Портфолио из трёх воспроизводимых аналитических проектов на открытых реальных данных. Проекты показывают полный аналитический цикл: получение данных, очистку и проверку качества, SQL/Python-анализ, формирование бизнес-метрик, интерпретацию ограничений и публикацию дашбордов.
+Портфолио из пяти аналитических кейсов. Три проекта — воспроизводимые pipeline на открытых реальных данных; ещё два — самостоятельные кейсы по Customer Retention и Subscription Revenue. Материалы показывают сбор и очистку данных, SQL/Python-анализ, бизнес-метрики, проверки качества и ограничения.
 
 ## Что можно проверить за несколько минут
 
 - **Marketing Analytics:** 12 330 исследовательских сессий, 1 908 покупок, конверсия 15,47%; сегментация и статистическая проверка различий.
 - **E-commerce Analytics:** 1 067 371 исходная строка транзакций; очистка, возвраты, RFM и когортный анализ.
 - **CIS Macro Analytics:** 6 стран × 25 лет; загрузка через World Bank API, обработка пропусков и сравнение временных рядов.
+- **Customer Retention & Sales Analytics:** публичный UCI Online Retail, возвраты, RFM, повторные покупки и когортное удержание.
+- **Subscription Revenue & Retention Analytics:** синтетическая модель подписок с MRR/ARR, revenue bridge, churn, expansion и PostgreSQL quality checks.
 
 > Это самостоятельные кейсы на открытых данных, а не коммерческие проекты. Исторические и методологические ограничения приведены ниже; выводы не подменяют измерение реального эффекта для бизнеса.
 
@@ -27,6 +29,8 @@
 | [01. Marketing Analytics](./projects/01_marketing_analytics/) | Какие характеристики сессии связаны с покупкой и где отличаются конверсии? | UCI Online Shoppers Purchasing Intention, 12 330 реальных сессий | очистка, conversion rate, сегментация, χ², Cramér's V, SQL |
 | [02. E-commerce Analytics](./projects/02_ecommerce_analytics/) | Как меняются продажи, клиентская база, повторные покупки и когорты? | UCI Online Retail II, 1 067 371 строк транзакций | ETL, data quality, RFM, когортный анализ, SQL/DuckDB |
 | [03. CIS Macro Analytics](./projects/03_cis_macro_analytics/) | Как менялись цифровое развитие и экономические показатели стран СНГ? | World Bank Indicators API, временные ряды по странам и годам | API ingestion, обработка пропусков, сравнение трендов, корреляции |
+| [04. Customer Retention & Sales Analytics](./projects/customer-retention-analytics/) | Как меняются net sales, повторные покупки, RFM-сегменты и удержание? | UCI Online Retail; агрегированные публичные результаты, тестовая fixture синтетическая | очистка транзакций, возвраты, pandas, SQLite, RFM, cohorts |
+| [05. Subscription Revenue & Retention Analytics](./projects/subscription-revenue-analytics/) | Как формируются MRR/ARR и как согласуются new, expansion, contraction и churn? | Синтетические подписки: 30 клиентов, 3 тарифа, 43 события | PostgreSQL, event-state reconstruction, window functions, cohorts, DQ checks |
 
 ## Быстрый старт
 
@@ -45,6 +49,16 @@
     python projects/01_marketing_analytics/run.py
     python projects/02_ecommerce_analytics/run.py
     python projects/03_cis_macro_analytics/run.py
+
+   Дополнительные проекты имеют собственные зависимости и инструкции:
+
+    cd projects/customer-retention-analytics
+    pip install -e ".[dev]"
+    python scripts/download_data.py
+    python scripts/build_public_report.py
+    pytest
+
+   Для Subscription Revenue см. [README проекта](./projects/subscription-revenue-analytics/) и `docker-compose.yml` внутри его каталога.
 
 3. Запустить проверки:
 
@@ -88,6 +102,15 @@
         run.py
         sql/queries.sql
         tests/test_pipeline.py
+      customer-retention-analytics/   # UCI retail, RFM and cohort analysis
+      subscription-revenue-analytics/ # PostgreSQL MRR/ARR and retention model
+
+## Дополнительные кейсы и ограничения
+
+Первые три проекта содержат воспроизводимые pipeline на открытых данных. Customer Retention использует открытый набор UCI Online Retail для локального анализа; в Git опубликованы только агрегированные результаты и маленькая синтетическая fixture. Subscription Revenue использует полностью синтетические записи и не является рыночным бенчмарком.
+
+- [Customer Retention](./projects/customer-retention-analytics/) — HTML-страница, анализ, SQL и privacy-safe aggregates.
+- [Subscription Revenue](./projects/subscription-revenue-analytics/) — визуальный кейс и PostgreSQL-модели с отдельным CI.
 
 ## Источники и лицензии
 
@@ -135,26 +158,18 @@ CI проверяет тесты, синтаксис Python и повторно 
 Код репозитория распространяется по MIT License. Лицензии исходных наборов данных отличаются и указаны выше; лицензия кода не заменяет лицензию данных.
 
 
-## Опубликованные интерактивные дашборды
+## Опубликованные проекты и страницы
 
-Статический сайт с агрегированными результатами опубликован через GitHub Pages. В нём доступны три интерактивных дашборда, аналитические выводы и ссылки на исходный код.
+Статический сайт собирается из пяти аналитических кейсов. Первые три проекта публикуют интерактивные HTML-дашборды из воспроизводимых pipeline; Customer Retention и Subscription Revenue публикуют отдельные страницы кейсов с методологией и ограничениями.
 
-- [Главная страница аналитического портфолио](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
+- [Главная страница — Data Analytics Projects & Dashboards](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
 - [01. Marketing Analytics — конверсия и поведение посетителей](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/01_marketing_analytics/dashboard.html)
 - [02. E-commerce Analytics — продажи, RFM и когорты](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/02_ecommerce_analytics/dashboard.html)
 - [03. CIS Macro Analytics — макроэкономические показатели стран СНГ](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/03_cis_macro_analytics/dashboard.html)
-- [GitHub Pages deployment — успешный запуск 24.11.2026](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/runs/45394565431)
+- [04. Customer Retention & Sales Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/customer-retention-analytics/)
+- [05. Subscription Revenue & Retention Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/subscription-revenue-analytics/)
 
-Публикуются только агрегированные отчёты и визуализации. Построчные пользовательские сессии и транзакции с клиентскими идентификаторами в Pages artifact не включаются. Повторный запуск workflow пересобирает данные и обновляет опубликованные дашборды.
-
-## Дополнительный опубликованный retail-кейс
-
-В более раннем инженерном архиве уже есть отдельная работа на реальных данных UCI Online Retail — 541 909 строк транзакций, воспроизводимая очистка, возвраты, RFM, когорты, SQL-сверка и опубликованные агрегированные результаты. Это смежный исторический кейс, а не один из трёх новых проектов в этом репозитории:
-
-- [Опубликованная страница Customer Retention & Sales Analytics](https://blvxx.github.io/portfolio/customer-retention-analytics/)
-- [README и методология исходного проекта](https://github.com/blvxx/portfolio/tree/main/customer-retention-analytics)
-
-В отчёте исходного проекта зафиксированы результаты, рассчитанные из UCI workbook, а не синтетические значения. Датасет также исторический (2010–2011), и все ограничения описаны в самом кейсе.
+[Workflow сборки и публикации GitHub Pages](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/build-dashboards.yml). Из Customer Retention публикуются только агрегированные результаты; исходные строки клиентов в Pages artifact не включаются. Subscription Revenue использует полностью синтетические записи и не является рыночным бенчмарком.
 
 ## Смежный инженерный кейс: Data Quality и ETL QA
 

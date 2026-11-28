@@ -1,6 +1,17 @@
 name: build-and-deploy-dashboards
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/**"
+      - "scripts/build_site.py"
+      - ".github/workflows/build-dashboards.yml"
+  pull_request:
+    paths:
+      - "projects/**"
+      - "scripts/build_site.py"
+      - ".github/workflows/build-dashboards.yml"
   workflow_dispatch:
 
 permissions:
@@ -37,6 +48,7 @@ jobs:
           path: ./site
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
