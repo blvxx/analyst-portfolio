@@ -64,6 +64,19 @@ def render_project_card(project: dict[str, object]) -> str:
     )
 
 
+def copy_case_study(slug: str, filenames: list[str]) -> None:
+    source_dir = ROOT / slug
+    destination_dir = SITE / slug
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    for filename in filenames:
+        source = source_dir / filename
+        if not source.exists():
+            raise FileNotFoundError(f"Expected case-study file is missing: {source}")
+        target = destination_dir / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+
+
 def main() -> None:
     SITE.mkdir(parents=True, exist_ok=True)
     cards: list[str] = []
@@ -81,6 +94,38 @@ def main() -> None:
         copy_required(source_dir, destination_dir / "data", list(project["safe_outputs"]))
         cards.append(render_project_card(project))
 
+    # Two complementary case studies live beside the three open-data projects.
+    # Their interactive pages are self-contained; the retention case also publishes
+    # an aggregate-only findings report generated from the public UCI source.
+    copy_case_study(
+        "customer-retention-analytics",
+        ["index.html", "docs/generated/findings.md"],
+    )
+    copy_case_study("subscription-revenue-analytics", ["index.html"])
+
+    cards.extend([
+        (
+            "<article><h2>Customer Retention &amp; Sales Analytics</h2>"
+            "<p>Public UCI Online Retail source data, refund-aware sales KPIs, RFM segmentation "
+            "and cohort retention. The bundled CSV is a synthetic offline fixture; published "
+            "reports contain aggregate results only.</p>"
+            '<p><a href="customer-retention-analytics/index.html">Открыть кейс</a> '
+            '| <a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/customer-retention-analytics">'
+            "Исходный код, данные и методология</a> "
+            '| <a href="customer-retention-analytics/docs/generated/findings.md">Агрегированные выводы</a></p>'
+            "</article>"
+        ),
+        (
+            "<article><h2>Subscription Revenue &amp; Retention Analytics</h2>"
+            "<p>PostgreSQL-first BI case for a fictional subscription business: synthetic event "
+            "data, MRR/ARR bridges, churn movements, cohort retention and SQL quality assertions.</p>"
+            '<p><a href="subscription-revenue-analytics/index.html">Открыть кейс</a> '
+            '| <a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/subscription-revenue-analytics">'
+            "SQL, схема и воспроизводимый запуск</a></p>"
+            "</article>"
+        ),
+    ])
+
     page = "\n".join([
         "<!doctype html>",
         '<html lang="ru"><head><meta charset="utf-8">',
@@ -94,8 +139,8 @@ def main() -> None:
         "footer{margin-top:38px;color:#667085;font-size:.92rem}",
         "</style></head><body>",
         "<header><h1>Data Analyst Portfolio</h1>",
-        "<p>Три аналитических проекта на открытых реальных данных. В каждом кейсе доступны интерактивный дашборд, выводы, источник данных, методология и ограничения.</p>",
-        "<p>Проекты — независимые аналитические работы на публичных данных, не коммерческие клиентские кейсы.</p></header>",
+        "<p>Пять аналитических кейсов: три проекта на открытых реальных данных и два дополнительных направления — customer retention и subscription BI. Для каждого доступны методология, исходный код и ограничения.</p>",
+        "<p>Это независимые аналитические работы: открытые исследовательские данные в трёх основных проектах и явно обозначенные синтетические данные в subscription-кейсе. Это не коммерческие клиентские кейсы.</p></header>",
         *cards,
         '<footer><a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards">Исходный код на GitHub</a> · '
         '<a href="https://github.com/blvxx">Профиль GitHub</a></footer>',
