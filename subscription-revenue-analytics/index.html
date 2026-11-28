@@ -42,7 +42,7 @@ footer{padding:25px 0 34px;color:#8295a2;font-size:10px}.footer-inner{display:fl
   <p class="eyebrow">Business intelligence · PostgreSQL · Subscription metrics</p>
   <h1>Measure recurring revenue. <em>Explain every movement.</em></h1>
   <p class="lead">A PostgreSQL-first BI case study for a fictional subscription business. The model reconstructs month-end subscription state from lifecycle events, builds an MRR movement bridge, calculates GRR / NRR and cohort retention, then validates that the numbers reconcile.</p>
-  <div class="actions"><a class="btn" href="https://github.com/blvxx/portfolio/tree/main/subscription-revenue-analytics">Explore SQL source ↗</a><a class="btn secondary" href="https://github.com/blvxx/portfolio/actions/workflows/subscription-revenue-analytics.yml">Open CI evidence ↗</a></div>
+  <div class="actions"><a class="btn" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/subscription-revenue-analytics">Explore SQL source ↗</a><a class="btn secondary" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/subscription-revenue-analytics.yml">Open CI evidence ↗</a></div>
  </div>
  <aside class="flow-card">
   <div class="flow-top"><span>Analytics architecture</span><span>PostgreSQL 16</span></div>
@@ -101,7 +101,7 @@ footer{padding:25px 0 34px;color:#8295a2;font-size:10px}.footer-inner{display:fl
     PARTITION BY subscription_id
     ORDER BY event_at, event_id
   ) AS previous_mrr
-FROM bi_subscription_events;</pre><div class="links"><a class="text-link" href="https://github.com/blvxx/portfolio/blob/main/subscription-revenue-analytics/sql/02_marts.sql">View analytical marts ↗</a></div></article>
+FROM bi_subscription_events;</pre><div class="links"><a class="text-link" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/blob/main/subscription-revenue-analytics/sql/02_marts.sql">View analytical marts ↗</a></div></article>
   <article class="code-card"><h3>BI-ready monthly KPIs</h3><pre>SELECT
   month_start,
   opening_mrr,
@@ -113,13 +113,13 @@ FROM bi_subscription_events;</pre><div class="links"><a class="text-link" href="
   net_revenue_retention_pct,
   mrr_bridge_delta
 FROM bi_mart_monthly_kpis
-ORDER BY month_start;</pre><div class="links"><a class="text-link" href="https://github.com/blvxx/portfolio/blob/main/subscription-revenue-analytics/sql/queries/monthly_kpis.sql">View KPI query ↗</a></div></article>
+ORDER BY month_start;</pre><div class="links"><a class="text-link" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/blob/main/subscription-revenue-analytics/sql/queries/monthly_kpis.sql">View KPI query ↗</a></div></article>
  </div>
 </div></section>
 <section id="run"><div class="wrap">
  <div class="head"><div><p class="kicker">04 / Reproducibility</p><h2>Run the model<br>on your machine.</h2></div><p>Docker Compose starts a local PostgreSQL 16 instance. The same schema, seed and assertions are used in GitHub Actions.</p></div>
  <div class="run">
-  <aside><h3>Requirements</h3><p>Docker Engine and Docker Compose. No external dataset download, API key or third-party service is required.</p><div class="links"><a class="text-link" href="https://github.com/blvxx/portfolio/blob/main/subscription-revenue-analytics/README.md">Full README ↗</a><a class="text-link" href="https://github.com/blvxx/portfolio/tree/main/subscription-revenue-analytics/sql/queries">All SQL queries ↗</a></div></aside>
+  <aside><h3>Requirements</h3><p>Docker Engine and Docker Compose. No external dataset download, API key or third-party service is required.</p><div class="links"><a class="text-link" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/blob/main/subscription-revenue-analytics/README.md">Full README ↗</a><a class="text-link" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/subscription-revenue-analytics/sql/queries">All SQL queries ↗</a></div></aside>
   <pre>cd subscription-revenue-analytics
 docker compose up -d
 docker compose exec -T db psql -U analytics -d subscription_bi -v ON_ERROR_STOP=1 -f /workspace/sql/00_schema.sql
@@ -135,10 +135,10 @@ docker compose exec -T db psql -U analytics -d subscription_bi -v ON_ERROR_STOP=
   <article class="card"><small>VALIDATION</small><h3>Fail-fast SQL checks</h3><p>Broken lifecycle and revenue reconciliation rules raise exceptions and fail CI.</p></article>
   <article class="card"><small>DELIVERY</small><h3>Aggregate CSV exports</h3><p>Three reporting outputs are uploaded as a workflow artifact for inspection.</p></article>
  </div>
- <div class="actions"><a class="btn" href="https://github.com/blvxx/portfolio/actions/workflows/subscription-revenue-analytics.yml">View workflow and run status ↗</a><a class="btn secondary" href="https://github.com/blvxx/portfolio/tree/main/subscription-revenue-analytics">Browse repository ↗</a></div>
+ <div class="actions"><a class="btn" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/subscription-revenue-analytics.yml">View workflow and run status ↗</a><a class="btn secondary" href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/subscription-revenue-analytics">Browse repository ↗</a></div>
  <div class="notice"><strong>Transparency:</strong> all customers, plans and subscription events are synthetic. The dataset is small and illustrative; it is not a real company analysis, current-market benchmark, accounting revenue report or predictive lifetime-value model. ARR is a run-rate estimate derived from month-end MRR.</div>
 </div></section>
 </main>
-<footer><div class="wrap footer-inner"><span>Artem Kalinin · Data & BI Analytics · PostgreSQL</span><span><a href="https://github.com/blvxx">GitHub</a> · <a href="mailto:blvx8x@gmail.com">Email</a> · <a href="https://blvxx.github.io/portfolio/engineering/">Engineering portfolio</a></span></div></footer>
+<footer><div class="wrap footer-inner"><span>Artem Kalinin · Data & BI Analytics · PostgreSQL</span><span><a href="https://github.com/blvxx">GitHub</a> · <a href="mailto:blvx8x@gmail.com">Email</a> · <a href="https://blvxx.github.io/portfolio/">Engineering portfolio</a></span></div></footer>
 </body>
 </html>
