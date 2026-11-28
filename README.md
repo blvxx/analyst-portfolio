@@ -8,7 +8,7 @@
 
 [Открыть опубликованные интерактивные дашборды](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/) · [Посмотреть исходный код и ETL](https://github.com/blvxx/Data-Analytics-Projects-Dashboards)
 
-Портфолио из трёх воспроизводимых аналитических проектов на открытых реальных данных. Проекты показывают полный аналитический цикл: получение данных, очистку и проверку качества, SQL/Python-анализ, формирование бизнес-метрик, интерпретацию ограничений и публикацию дашбордов.
+Основу составляют три воспроизводимых аналитических проекта на открытых реальных данных; дополнительно опубликованы отдельные кейсы по customer retention и subscription revenue. Проекты показывают полный аналитический цикл: получение данных, очистку и проверку качества, SQL/Python-анализ, формирование бизнес-метрик, интерпретацию ограничений и публикацию дашбордов.
 
 ## Что можно проверить за несколько минут
 
@@ -27,6 +27,13 @@
 | [01. Marketing Analytics](./projects/01_marketing_analytics/) | Какие характеристики сессии связаны с покупкой и где отличаются конверсии? | UCI Online Shoppers Purchasing Intention, 12 330 реальных сессий | очистка, conversion rate, сегментация, χ², Cramér's V, SQL |
 | [02. E-commerce Analytics](./projects/02_ecommerce_analytics/) | Как меняются продажи, клиентская база, повторные покупки и когорты? | UCI Online Retail II, 1 067 371 строк транзакций | ETL, data quality, RFM, когортный анализ, SQL/DuckDB |
 | [03. CIS Macro Analytics](./projects/03_cis_macro_analytics/) | Как менялись цифровое развитие и экономические показатели стран СНГ? | World Bank Indicators API, временные ряды по странам и годам | API ingestion, обработка пропусков, сравнение трендов, корреляции |
+
+## Дополнительные аналитические кейсы
+
+Помимо трёх основных проектов на открытых данных, репозиторий содержит два дополнительных направления. Они публикуются на той же GitHub Pages-витрине, но имеют отдельную методологию и явно обозначенные границы данных.
+
+- **[Customer Retention & Sales Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/customer-retention-analytics/)** — исторический UCI Online Retail (541 909 транзакционных строк), обработка отмен и возвратов, refund-aware KPI, RFM, когорты и агрегированные отчёты. В репозитории присутствует небольшая синтетическая CSV-фикстура для offline tests/preview; это не подвыборка исходного UCI workbook. Полный источник загружается workflow из UCI, а публично публикуются только агрегаты.
+- **[Subscription Revenue & Retention Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/subscription-revenue-analytics/)** — PostgreSQL-first BI-кейс на синтетических данных: 30 вымышленных клиентов, 43 события подписки и 18 месяцев; MRR/ARR, revenue bridge, churn movements, retention cohorts и SQL quality assertions. Это демонстрационный сценарий, а не реальные показатели бизнеса.
 
 ## Быстрый старт
 
@@ -137,7 +144,7 @@ CI проверяет тесты, синтаксис Python и повторно 
 
 ## Опубликованные интерактивные дашборды
 
-Статический сайт с агрегированными результатами опубликован через GitHub Pages. В нём доступны три интерактивных дашборда, аналитические выводы и ссылки на исходный код.
+Статический сайт с агрегированными результатами опубликован через GitHub Pages. В нём доступны три основных интерактивных дашборда и две дополнительные case-study страницы.
 
 - [Главная страница аналитического портфолио](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
 - [01. Marketing Analytics — конверсия и поведение посетителей](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/01_marketing_analytics/dashboard.html)
