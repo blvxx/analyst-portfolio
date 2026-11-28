@@ -1,6 +1,14 @@
 name: build-and-deploy-dashboards
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - "projects/**"
+      - "customer-retention-analytics/**"
+      - "subscription-revenue-analytics/**"
+      - "scripts/build_site.py"
+      - ".github/workflows/build-dashboards.yml"
   workflow_dispatch:
 
 permissions:
