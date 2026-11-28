@@ -1,4 +1,4 @@
-# Data Analytics — Project Evidence
+# Data Analytics Projects & Dashboards
 
 > **Portfolio navigation:** the employer-facing overview is the [single career portfolio](https://blvxx.github.io/portfolio/). This repository contains reproducible analytics projects, data pipelines, SQL/Python analysis and dashboard evidence.
 
@@ -8,13 +8,15 @@
 
 [Открыть опубликованные интерактивные дашборды](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/) · [Посмотреть исходный код и ETL](https://github.com/blvxx/Data-Analytics-Projects-Dashboards)
 
-Портфолио из трёх воспроизводимых аналитических проектов на открытых реальных данных. Проекты показывают полный аналитический цикл: получение данных, очистку и проверку качества, SQL/Python-анализ, формирование бизнес-метрик, интерпретацию ограничений и публикацию дашбордов.
+Портфолио из пяти аналитических кейсов. Три проекта — воспроизводимые pipeline на открытых реальных данных; ещё два — самостоятельные кейсы по Customer Retention и Subscription Revenue. Материалы показывают сбор и очистку данных, SQL/Python-анализ, бизнес-метрики, проверки качества и ограничения.
 
 ## Что можно проверить за несколько минут
 
 - **Marketing Analytics:** 12 330 исследовательских сессий, 1 908 покупок, конверсия 15,47%; сегментация и статистическая проверка различий.
 - **E-commerce Analytics:** 1 067 371 исходная строка транзакций; очистка, возвраты, RFM и когортный анализ.
 - **CIS Macro Analytics:** 6 стран × 25 лет; загрузка через World Bank API, обработка пропусков и сравнение временных рядов.
+- **Customer Retention & Sales Analytics:** публичный UCI Online Retail, возвраты, RFM, повторные покупки и когортное удержание.
+- **Subscription Revenue & Retention Analytics:** синтетическая модель подписок с MRR/ARR, revenue bridge, churn, expansion и PostgreSQL quality checks.
 
 > Это самостоятельные кейсы на открытых данных, а не коммерческие проекты. Исторические и методологические ограничения приведены ниже; выводы не подменяют измерение реального эффекта для бизнеса.
 
@@ -27,6 +29,8 @@
 | [01. Marketing Analytics](./projects/01_marketing_analytics/) | Какие характеристики сессии связаны с покупкой и где отличаются конверсии? | UCI Online Shoppers Purchasing Intention, 12 330 реальных сессий | очистка, conversion rate, сегментация, χ², Cramér's V, SQL |
 | [02. E-commerce Analytics](./projects/02_ecommerce_analytics/) | Как меняются продажи, клиентская база, повторные покупки и когорты? | UCI Online Retail II, 1 067 371 строк транзакций | ETL, data quality, RFM, когортный анализ, SQL/DuckDB |
 | [03. CIS Macro Analytics](./projects/03_cis_macro_analytics/) | Как менялись цифровое развитие и экономические показатели стран СНГ? | World Bank Indicators API, временные ряды по странам и годам | API ingestion, обработка пропусков, сравнение трендов, корреляции |
+| [04. Customer Retention & Sales Analytics](./projects/customer-retention-analytics/) | Как меняются net sales, повторные покупки, RFM-сегменты и удержание? | UCI Online Retail; агрегированные публичные результаты, тестовая fixture синтетическая | очистка транзакций, возвраты, pandas, SQLite, RFM, cohorts |
+| [05. Subscription Revenue & Retention Analytics](./projects/subscription-revenue-analytics/) | Как формируются MRR/ARR и как согласуются new, expansion, contraction и churn? | Синтетические подписки: 30 клиентов, 3 тарифа, 43 события | PostgreSQL, event-state reconstruction, window functions, cohorts, DQ checks |
 
 ## Быстрый старт
 
@@ -45,6 +49,16 @@
     python projects/01_marketing_analytics/run.py
     python projects/02_ecommerce_analytics/run.py
     python projects/03_cis_macro_analytics/run.py
+
+   Дополнительные проекты имеют собственные зависимости и инструкции:
+
+    cd projects/customer-retention-analytics
+    pip install -e ".[dev]"
+    python scripts/download_data.py
+    python scripts/build_public_report.py
+    pytest
+
+   Для Subscription Revenue см. [README проекта](./projects/subscription-revenue-analytics/) и `docker-compose.yml` внутри его каталога.
 
 3. Запустить проверки:
 
@@ -88,6 +102,15 @@
         run.py
         sql/queries.sql
         tests/test_pipeline.py
+      customer-retention-analytics/   # UCI retail, RFM and cohort analysis
+      subscription-revenue-analytics/ # PostgreSQL MRR/ARR and retention model
+
+## Дополнительные кейсы и ограничения
+
+Первые три проекта содержат воспроизводимые pipeline на открытых данных. Customer Retention использует открытый набор UCI Online Retail для локального анализа; в Git опубликованы только агрегированные результаты и маленькая синтетическая fixture. Subscription Revenue использует полностью синтетические записи и не является рыночным бенчмарком.
+
+- [Customer Retention](./projects/customer-retention-analytics/) — HTML-страница, анализ, SQL и privacy-safe aggregates.
+- [Subscription Revenue](./projects/subscription-revenue-analytics/) — визуальный кейс и PostgreSQL-модели с отдельным CI.
 
 ## Источники и лицензии
 
