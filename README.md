@@ -6,7 +6,7 @@
 **Target roles:** Data Analyst · Marketing Analyst · BI / Reporting Analyst  
 **Stack:** Python · SQL · pandas · DuckDB · Plotly
 
-[Открыть опубликованные интерактивные дашборды](https://blvxx.github.io/analyst-portfolio/) · [Посмотреть исходный код и ETL](https://github.com/blvxx/analyst-portfolio)
+[Открыть опубликованные интерактивные дашборды](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/) · [Посмотреть исходный код и ETL](https://github.com/blvxx/Data-Analytics-Projects-Dashboards)
 
 Портфолио из трёх воспроизводимых аналитических проектов на открытых реальных данных. Проекты показывают полный аналитический цикл: получение данных, очистку и проверку качества, SQL/Python-анализ, формирование бизнес-метрик, интерпретацию ограничений и публикацию дашбордов.
 
@@ -125,8 +125,8 @@
 
 **Важные оговорки:** маркетинговая конверсия относится к исследовательским сессиям и не является ROAS/ROI. E-commerce набор исторический (2009–2011), валовая выручка исключает отмены и отрицательные количества, а клиентская аналитика использует только строки с Customer ID. Макроданные — агрегаты World Bank; ВВП на душу населения в текущих USD не является реальным экономическим ростом, а корреляции не доказывают причинность.
 
-- [Последний полный Docker-запуск, сборка и публикация GitHub Pages — 24.11.2026](https://github.com/blvxx/analyst-portfolio/actions/runs/45394565431)
-- [CI: unit-тесты и компиляция](https://github.com/blvxx/analyst-portfolio/actions/runs/45392554572)
+- [Последний полный Docker-запуск, сборка и публикация GitHub Pages — 24.11.2026](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/runs/45394565431)
+- [CI: unit-тесты и компиляция](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/runs/45392554572)
 
 CI проверяет тесты, синтаксис Python и повторно выполняет 14 unit-тестов внутри Docker Compose; отдельный workflow запускает все три ETL внутри Docker, загружает полные исходники, проверяет ожидаемый объём и SQL/Python reconciliation, собирает интерактивные HTML-дашборды. В публичный артефакт входят только агрегированные результаты и визуализации, не построчные сессии и не клиентские ID.
 
@@ -139,11 +139,11 @@ CI проверяет тесты, синтаксис Python и повторно 
 
 Статический сайт с агрегированными результатами опубликован через GitHub Pages. В нём доступны три интерактивных дашборда, аналитические выводы и ссылки на исходный код.
 
-- [Главная страница аналитического портфолио](https://blvxx.github.io/analyst-portfolio/)
-- [01. Marketing Analytics — конверсия и поведение посетителей](https://blvxx.github.io/analyst-portfolio/01_marketing_analytics/dashboard.html)
-- [02. E-commerce Analytics — продажи, RFM и когорты](https://blvxx.github.io/analyst-portfolio/02_ecommerce_analytics/dashboard.html)
-- [03. CIS Macro Analytics — макроэкономические показатели стран СНГ](https://blvxx.github.io/analyst-portfolio/03_cis_macro_analytics/dashboard.html)
-- [GitHub Pages deployment — успешный запуск 24.11.2026](https://github.com/blvxx/analyst-portfolio/actions/runs/45394565431)
+- [Главная страница аналитического портфолио](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
+- [01. Marketing Analytics — конверсия и поведение посетителей](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/01_marketing_analytics/dashboard.html)
+- [02. E-commerce Analytics — продажи, RFM и когорты](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/02_ecommerce_analytics/dashboard.html)
+- [03. CIS Macro Analytics — макроэкономические показатели стран СНГ](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/03_cis_macro_analytics/dashboard.html)
+- [GitHub Pages deployment — успешный запуск 24.11.2026](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/runs/45394565431)
 
 Публикуются только агрегированные отчёты и визуализации. Построчные пользовательские сессии и транзакции с клиентскими идентификаторами в Pages artifact не включаются. Повторный запуск workflow пересобирает данные и обновляет опубликованные дашборды.
 
@@ -158,4 +158,4 @@ CI проверяет тесты, синтаксис Python и повторно 
 
 ## Смежный инженерный кейс: Data Quality и ETL QA
 
-Дополняющий проект по тестированию слоёв хранилища PostgreSQL, оркестрации Airflow, сверке source-to-target, повторным запускам и DQ-проверкам: [DWH Data Quality & ETL Testing Platform](https://github.com/blvxx/qa-engineering-portfolio/tree/main/dwh-data-quality-testing). Это отдельная инженерная лаборатория на синтетических данных, а не один из трёх аналитических проектов на открытых данных выше.
+Дополняющий проект по тестированию слоёв хранилища PostgreSQL, оркестрации Airflow, сверке source-to-target, повторным запускам и DQ-проверкам: [DWH Data Quality & ETL Testing Platform](https://github.com/blvxx/qa-engineering-labs/tree/main/dwh-data-quality-testing). Это отдельная инженерная лаборатория на синтетических данных, а не один из трёх аналитических проектов на открытых данных выше.
