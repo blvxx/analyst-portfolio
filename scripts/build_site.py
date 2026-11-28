@@ -57,7 +57,7 @@ def render_project_card(project: dict[str, object]) -> str:
     return (
         "<article><h2>" + title + "</h2><p>" + description + "</p>"
         '<p><a href="' + slug + '/dashboard.html">Открыть интерактивный дашборд</a> '
-        '| <a href="https://github.com/blvxx/analyst-portfolio/tree/main/projects/'
+        '| <a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/projects/'
         + slug + '">Исходный код и методология</a> '
         '| <a href="' + slug + '/data/findings.md">Аналитические выводы</a></p>'
         "</article>"
@@ -97,7 +97,7 @@ def main() -> None:
         "<p>Три аналитических проекта на открытых реальных данных. В каждом кейсе доступны интерактивный дашборд, выводы, источник данных, методология и ограничения.</p>",
         "<p>Проекты — независимые аналитические работы на публичных данных, не коммерческие клиентские кейсы.</p></header>",
         *cards,
-        '<footer><a href="https://github.com/blvxx/analyst-portfolio">Исходный код на GitHub</a> · '
+        '<footer><a href="https://github.com/blvxx/Data-Analytics-Projects-Dashboards">Исходный код на GitHub</a> · '
         '<a href="https://github.com/blvxx">Профиль GitHub</a></footer>',
         "</body></html>",
     ])
