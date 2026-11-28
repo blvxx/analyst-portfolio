@@ -1,8 +1,8 @@
 # Subscription Revenue & Retention Analytics
 
-[![PostgreSQL BI Analytics](https://github.com/blvxx/portfolio/actions/workflows/subscription-revenue-analytics.yml/badge.svg)](https://github.com/blvxx/portfolio/actions/workflows/subscription-revenue-analytics.yml)
+[![PostgreSQL BI Analytics](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/subscription-revenue-analytics.yml/badge.svg)](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/subscription-revenue-analytics.yml)
 
-**[Open the visual case study](https://blvxx.github.io/portfolio/subscription-revenue-analytics/)** · **[Source on GitHub](https://github.com/blvxx/portfolio/tree/main/subscription-revenue-analytics)** · **[Workflow runs](https://github.com/blvxx/portfolio/actions/workflows/subscription-revenue-analytics.yml)**
+**[Open the visual case study](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/subscription-revenue-analytics/)** · **[Source on GitHub](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/subscription-revenue-analytics)** · **[Workflow runs](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/subscription-revenue-analytics.yml)**
 
 ## Overview
 
