@@ -130,7 +130,7 @@ def main() -> None:
         "a{color:#2359c4;font-weight:650;text-decoration:none}a:hover{text-decoration:underline}",
         "footer{margin-top:38px;color:#667085;font-size:.92rem}",
         "</style></head><body>",
-        "<header><h1>Data Data Analytics Projects & Dashboards</h1>",
+        "<header><h1>Data Analytics Projects & Dashboards</h1>",
         "<p>Пять аналитических кейсов: три воспроизводимых pipeline на открытых данных и два отдельных направления Customer Retention и Subscription Revenue. Для каждого доступны методология, ограничения и исходные материалы.</p>",
         "<p>Проекты — независимые аналитические работы на публичных данных, не коммерческие клиентские кейсы.</p></header>",
         *cards,
