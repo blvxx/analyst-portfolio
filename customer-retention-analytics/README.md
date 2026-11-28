@@ -1,6 +1,6 @@
-[![Customer Retention Analytics](https://github.com/blvxx/portfolio/actions/workflows/customer-retention-analytics.yml/badge.svg)](https://github.com/blvxx/portfolio/actions/workflows/customer-retention-analytics.yml)
+[![Customer Retention Analytics](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/customer-retention-analytics.yml/badge.svg)](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/customer-retention-analytics.yml)
 
-[**Live case study page**](https://blvxx.github.io/portfolio/customer-retention-analytics/) · [Repository source](https://github.com/blvxx/portfolio/tree/main/customer-retention-analytics)
+[**Live case study page**](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/customer-retention-analytics/) · [Repository source](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/tree/main/customer-retention-analytics)
 
 # Customer Retention & Sales Analytics
 
@@ -61,7 +61,7 @@ The local exploratory pipeline writes detailed working outputs under outputs/. T
 - [SQL RFM segments](docs/generated/sql_rfm_segments.csv)
 - [SQL cohort retention](docs/generated/sql_cohort_retention.csv)
 
-The [Retail Dataset Analysis workflow](https://github.com/blvxx/portfolio/actions/workflows/customer-retention-data-refresh.yml) downloads the original workbook in GitHub Actions, generates the public report, runs unit tests, uploads an artifact and commits only aggregate outputs. The raw workbook and customer-level records stay outside Git.
+The [Retail Dataset Analysis workflow](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/customer-retention-data-refresh.yml) downloads the original workbook in GitHub Actions, generates the public report, runs unit tests, uploads an artifact and commits only aggregate outputs. The raw workbook and customer-level records stay outside Git.
 
 ## Interactive dashboard
 
