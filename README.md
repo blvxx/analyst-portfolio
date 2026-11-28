@@ -158,26 +158,18 @@ CI проверяет тесты, синтаксис Python и повторно 
 Код репозитория распространяется по MIT License. Лицензии исходных наборов данных отличаются и указаны выше; лицензия кода не заменяет лицензию данных.
 
 
-## Опубликованные интерактивные дашборды
+## Опубликованные проекты и страницы
 
-Статический сайт с агрегированными результатами опубликован через GitHub Pages. В нём доступны три интерактивных дашборда, аналитические выводы и ссылки на исходный код.
+Статический сайт собирается из пяти аналитических кейсов. Первые три проекта публикуют интерактивные HTML-дашборды из воспроизводимых pipeline; Customer Retention и Subscription Revenue публикуют отдельные страницы кейсов с методологией и ограничениями.
 
-- [Главная страница аналитического портфолио](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
+- [Главная страница — Data Analytics Projects & Dashboards](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/)
 - [01. Marketing Analytics — конверсия и поведение посетителей](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/01_marketing_analytics/dashboard.html)
 - [02. E-commerce Analytics — продажи, RFM и когорты](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/02_ecommerce_analytics/dashboard.html)
 - [03. CIS Macro Analytics — макроэкономические показатели стран СНГ](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/03_cis_macro_analytics/dashboard.html)
-- [GitHub Pages deployment — успешный запуск 24.11.2026](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/runs/45394565431)
+- [04. Customer Retention & Sales Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/customer-retention-analytics/)
+- [05. Subscription Revenue & Retention Analytics](https://blvxx.github.io/Data-Analytics-Projects-Dashboards/subscription-revenue-analytics/)
 
-Публикуются только агрегированные отчёты и визуализации. Построчные пользовательские сессии и транзакции с клиентскими идентификаторами в Pages artifact не включаются. Повторный запуск workflow пересобирает данные и обновляет опубликованные дашборды.
-
-## Дополнительный опубликованный retail-кейс
-
-В более раннем инженерном архиве уже есть отдельная работа на реальных данных UCI Online Retail — 541 909 строк транзакций, воспроизводимая очистка, возвраты, RFM, когорты, SQL-сверка и опубликованные агрегированные результаты. Это смежный исторический кейс, а не один из трёх новых проектов в этом репозитории:
-
-- [Опубликованная страница Customer Retention & Sales Analytics](https://blvxx.github.io/portfolio/customer-retention-analytics/)
-- [README и методология исходного проекта](https://github.com/blvxx/portfolio/tree/main/customer-retention-analytics)
-
-В отчёте исходного проекта зафиксированы результаты, рассчитанные из UCI workbook, а не синтетические значения. Датасет также исторический (2010–2011), и все ограничения описаны в самом кейсе.
+[Workflow сборки и публикации GitHub Pages](https://github.com/blvxx/Data-Analytics-Projects-Dashboards/actions/workflows/build-dashboards.yml). Из Customer Retention публикуются только агрегированные результаты; исходные строки клиентов в Pages artifact не включаются. Subscription Revenue использует полностью синтетические записи и не является рыночным бенчмарком.
 
 ## Смежный инженерный кейс: Data Quality и ETL QA
 
