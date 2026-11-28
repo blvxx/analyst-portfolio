@@ -1,4 +1,7 @@
-# Analyst Portfolio
+# Data Analytics — Project Evidence
+
+> **Portfolio navigation:** the employer-facing overview is the [single career portfolio](https://blvxx.github.io/portfolio/). This repository contains reproducible analytics projects, data pipelines, SQL/Python analysis and dashboard evidence.
+
 
 **Target roles:** Data Analyst · Marketing Analyst · BI / Reporting Analyst  
 **Stack:** Python · SQL · pandas · DuckDB · Plotly
